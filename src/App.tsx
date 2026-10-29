@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import clsx from "clsx";
 
@@ -313,6 +314,17 @@ export default function App() {
       } else {
         setDragging(false);
       }
+    });
+    return () => {
+      void unlisten.then((off) => off());
+    };
+  }, [openPaths]);
+
+  // A second launch exits immediately and forwards the documents it was asked
+  // to open to the instance that is already running.
+  useEffect(() => {
+    const unlisten = listen<string[]>("open-files", (event) => {
+      void openPaths(event.payload);
     });
     return () => {
       void unlisten.then((off) => off());

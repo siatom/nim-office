@@ -376,18 +376,12 @@
 }
 
 .docx-editor .docx-ruler-frame {
-  transform: translate(
-    var(--oo-focused-ruler-horizontal-x, 0px),
-    var(--oo-focused-ruler-horizontal-y, 0px)
-  );
+  transform: translateX(var(--oo-focused-ruler-horizontal-x, 0px));
 }
 
 .docx-editor .docx-vertical-ruler {
   border-inline-end: 1px solid color-mix(in srgb, var(--border-strong) 78%, transparent);
-  transform: translate(
-    var(--oo-focused-ruler-vertical-x, 0px),
-    var(--oo-focused-ruler-vertical-y, 0px)
-  );
+  transform: translateY(var(--oo-focused-ruler-vertical-y, 0px));
 }
 
 .docx-editor .docx-horizontal-ruler [style*="width: 1px"],

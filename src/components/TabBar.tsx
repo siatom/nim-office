@@ -89,8 +89,8 @@ export function TabBar({
   return (
     <>
       <div
+        className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         data-tauri-drag-region
-        className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {tabs.map((tab) => (
           <TabButton
@@ -101,16 +101,19 @@ export function TabBar({
             onClose={() => onClose(tab.id)}
           />
         ))}
+        {/* New-tab button trails the last tab so the strip reads as one
+            continuous row instead of leaving a gap before the window buttons. */}
+        <button
+          type="button"
+          onClick={onNew}
+          aria-label="新建文档"
+          title="新建文档"
+          className="grid size-7 shrink-0 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+        >
+          <Plus size={15} />
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={onNew}
-        aria-label="新建文档"
-        title="新建文档"
-        className="grid size-7 shrink-0 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-      >
-        <Plus size={15} />
-      </button>
+      <div data-tauri-drag-region className="h-full min-w-2 flex-1" />
     </>
   );
 }

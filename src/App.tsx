@@ -12,7 +12,7 @@ import { EmptyState } from "./components/EmptyState";
 import { DropOverlay } from "./components/DropOverlay";
 import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
 import { SettingsDialog } from "./components/SettingsDialog";
-import { AgentPanel, readAgentConfig, type AgentConfig } from "./components/AgentPanel";
+import { AgentPanel, readAgentSettings, type AgentSettings } from "./components/AgentPanel";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
 import { DocxLoadingState, DocxView } from "./features/docx/DocxView";
 import type { DocxEngineHandle, ZoomDisplayMode } from "./features/docx/engine";
@@ -80,7 +80,7 @@ export default function App() {
   const [dragging, setDragging] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
-  const [agentConfig, setAgentConfig] = useState<AgentConfig>(readAgentConfig);
+  const [agentSettings, setAgentSettings] = useState<AgentSettings>(readAgentSettings);
   const [autoSave, setAutoSave] = useState(readAutoSavePreference);
   // The welcome page is also reachable while documents stay open, so it needs
   // its own flag rather than being derived from an empty tab list.
@@ -98,6 +98,8 @@ export default function App() {
   activeIdRef.current = activeId;
 
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? null;
+  const agentConfig = agentSettings.providers.find((provider) => provider.id === agentSettings.defaultProviderId)
+    ?? agentSettings.providers[0];
   const showWelcome = welcomeOpen || tabs.length === 0;
   // The status bar describes the document on screen, so it goes quiet while the
   // welcome page is in front of it.
@@ -105,6 +107,11 @@ export default function App() {
 
   const pushToast = useCallback((kind: ToastKind, message: string) => {
     setToasts((prev) => [...prev, { id: Date.now() + Math.random(), kind, message }]);
+  }, []);
+
+  const updateAgentSettings = useCallback((settings: AgentSettings) => {
+    localStorage.setItem("nim-office.agent-providers", JSON.stringify(settings));
+    setAgentSettings(settings);
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -754,8 +761,8 @@ export default function App() {
         autoSave={autoSave}
         onAutoSaveChange={setAutoSave}
         onClose={() => setSettingsOpen(false)}
-        agentConfig={agentConfig}
-        onAgentConfigChange={setAgentConfig}
+        agentSettings={agentSettings}
+        onAgentSettingsChange={updateAgentSettings}
       />
 
       {dragging && <DropOverlay />}

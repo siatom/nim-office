@@ -68,6 +68,7 @@ pub fn run() {
             commands::clear_recent,
             commands::path_exists,
             commands::agent_chat,
+            commands::test_agent_provider,
             fonts::load_system_fonts,
         ])
         .run(context)

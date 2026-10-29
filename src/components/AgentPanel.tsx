@@ -2,13 +2,32 @@ import { useMemo, useState } from "react";
 import { Bot, Send, Settings2, X } from "lucide-react";
 import { agentChat } from "../lib/ipc";
 
-export interface AgentConfig { baseUrl: string; apiKey: string; model: string }
+export interface AgentProvider { id: string; name: string; baseUrl: string; apiKey: string; model: string }
+export interface AgentSettings { providers: AgentProvider[]; defaultProviderId: string }
+export type AgentConfig = AgentProvider;
 export interface AgentDocument { name: string; size: number; pageCount: number; text: string; headings: string[] }
 type Message = { role: "user" | "assistant"; content: string };
 
-export function readAgentConfig(): AgentConfig {
-  try { return { baseUrl: "https://api.deepseek.com/v1", apiKey: "", model: "deepseek-chat", ...JSON.parse(localStorage.getItem("nim-office.agent-model") ?? "{}") }; }
-  catch { return { baseUrl: "https://api.deepseek.com/v1", apiKey: "", model: "deepseek-chat" }; }
+export const DEFAULT_AGENT_PROVIDER: AgentProvider = {
+  id: "deepseek",
+  name: "DeepSeek",
+  baseUrl: "https://api.deepseek.com",
+  apiKey: "",
+  model: "deepseek-flash",
+};
+const AGENT_SETTINGS_KEY = "nim-office.agent-providers";
+
+export function readAgentSettings(): AgentSettings {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AGENT_SETTINGS_KEY) ?? "null") as AgentSettings | null;
+    if (saved?.providers?.length && saved.providers.some((provider) => provider.id === saved.defaultProviderId)) return saved;
+    const legacy = JSON.parse(localStorage.getItem("nim-office.agent-model") ?? "null") as Partial<AgentConfig> | null;
+    if (legacy?.baseUrl || legacy?.model || legacy?.apiKey) {
+      const provider = { ...DEFAULT_AGENT_PROVIDER, ...legacy, id: "custom", name: "自定义模型" };
+      return { providers: [provider], defaultProviderId: provider.id };
+    }
+  } catch { /* Use the default provider for malformed or missing settings. */ }
+  return { providers: [DEFAULT_AGENT_PROVIDER], defaultProviderId: DEFAULT_AGENT_PROVIDER.id };
 }
 
 export function AgentPanel({ open, document, config, onClose, onSettings }: {
@@ -47,7 +66,7 @@ export function AgentPanel({ open, document, config, onClose, onSettings }: {
   return <aside className="flex h-full w-[min(360px,38vw)] shrink-0 flex-col border-r border-line bg-surface shadow-card">
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-4">
       <span className="grid size-7 place-items-center rounded-lg bg-accent-soft text-accent"><Bot size={16} /></span>
-      <div className="min-w-0 flex-1"><div className="text-[13px] font-semibold">文档智能体</div><div className="truncate text-[10px] text-ink-muted">{config.model || "未配置模型"}</div></div>
+      <div className="min-w-0 flex-1"><div className="text-[13px] font-semibold">文档智能体</div><div className="truncate text-[10px] text-ink-muted">{config.name} · {config.model || "未配置模型"}</div></div>
       <button title="模型设置" onClick={onSettings} className="grid size-7 place-items-center rounded-md text-ink-muted hover:bg-surface-muted"><Settings2 size={15}/></button>
       <button title="关闭" onClick={onClose} className="grid size-7 place-items-center rounded-md text-ink-muted hover:bg-surface-muted"><X size={15}/></button>
     </header>

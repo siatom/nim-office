@@ -55,6 +55,10 @@ export function agentChat(baseUrl: string, apiKey: string, model: string, messag
   return invoke<string>("agent_chat", { baseUrl, apiKey, model, messages });
 }
 
+export function testAgentProvider(baseUrl: string, apiKey: string, model: string) {
+  return invoke<void>("test_agent_provider", { baseUrl, apiKey, model });
+}
+
 export function pathExists(path: string) {
   return invoke<boolean>("path_exists", { path });
 }

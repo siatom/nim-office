@@ -117,7 +117,8 @@ Font bytes always come from the host, so the app ships no font files. Documents 
 `仿宋_GB2312`, `楷体_GB2312` or `方正小标宋简体` keep those names when saved; if the exact file
 is not installed, the resolver serves the closest installed face (FangSong / KaiTi, and
 华文中宋 for the title face) under the authored name, and HarfBuzz measures with those bytes.
-All three families are offered in the editor's font picker.
+The picker always offers 宋体, 黑体, 楷体, 仿宋, 微软雅黑, 等线 and the government-document
+faces under a dedicated 中文字体 group, alongside the Latin categories.
 
 ## License
 

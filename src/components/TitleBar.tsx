@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, PanelLeftClose, PanelLeftOpen, Square, X } from "lucide-react";
 import clsx from "clsx";
@@ -21,6 +21,7 @@ function WindowButton({
   return (
     <button
       type="button"
+      data-window-control
       onClick={onClick}
       aria-label={label}
       title={label}
@@ -56,6 +57,9 @@ export function TitleBar({
   onShowWelcome: () => void;
 }) {
   const [maximized, setMaximized] = useState(false);
+  const dragStart = useRef<{ x: number; y: number; pointerId: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const win = getCurrentWindow();
@@ -70,13 +74,54 @@ export function TitleBar({
 
   const win = getCurrentWindow();
 
+  useEffect(() => {
+    const dragWindow = getCurrentWindow();
+    const onPointerMove = (event: PointerEvent) => {
+      const start = dragStart.current;
+      if (!start || event.pointerId !== start.pointerId) return;
+
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      if (dx * dx + dy * dy < 36) return;
+
+      dragStart.current = null;
+      void dragWindow.startDragging();
+    };
+    const stopDragging = (event: PointerEvent) => {
+      if (dragStart.current?.pointerId === event.pointerId) {
+        dragStart.current = null;
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", stopDragging);
+    window.addEventListener("pointercancel", stopDragging);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", stopDragging);
+      window.removeEventListener("pointercancel", stopDragging);
+    };
+  }, []);
+
   return (
     <header
-      data-tauri-drag-region
+      onPointerDown={(event) => {
+        if (
+          event.button !== 0 ||
+          (event.target instanceof Element &&
+            event.target.closest("[data-window-control]"))
+        ) {
+          return;
+        }
+        dragStart.current = {
+          x: event.clientX,
+          y: event.clientY,
+          pointerId: event.pointerId,
+        };
+      }}
       className="flex h-9 shrink-0 select-none items-center border-b border-line bg-bg"
     >
       <div
-        data-tauri-drag-region
         className={clsx(
           "flex shrink-0 items-center gap-2 pr-1",
           isMac ? "pl-20" : "pl-2",
@@ -122,7 +167,7 @@ export function TitleBar({
           />
         </div>
       ) : (
-        <div data-tauri-drag-region className="h-full flex-1" />
+        <div className="h-full flex-1" />
       )}
 
       {!isMac && (

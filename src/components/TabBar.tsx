@@ -90,7 +90,6 @@ export function TabBar({
     <>
       <div
         className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        data-tauri-drag-region
       >
         {tabs.map((tab) => (
           <TabButton
@@ -113,7 +112,7 @@ export function TabBar({
           <Plus size={15} />
         </button>
       </div>
-      <div data-tauri-drag-region className="h-full min-w-2 flex-1" />
+      <div className="h-full min-w-2 flex-1" />
     </>
   );
 }

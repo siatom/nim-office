@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
 
-const STORAGE_KEY = "one-office.theme";
+const STORAGE_KEY = "nim-office.theme";
 
 function readStored(): ThemeMode {
   const value = localStorage.getItem(STORAGE_KEY);

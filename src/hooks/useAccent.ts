@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useState } from "react";
 import { DEFAULT_ACCENT, findPreset, normalizeAccent, readableInk } from "../lib/accents";
 
-const STORAGE_KEY = "one-office.accent";
+const STORAGE_KEY = "nim-office.accent";
 
 function readStored(): string {
   return normalizeAccent(localStorage.getItem(STORAGE_KEY));

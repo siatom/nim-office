@@ -47,8 +47,8 @@ interface DocTab {
 }
 
 const SUPPORTED: DocumentKind[] = ["docx"];
-const SIDEBAR_KEY = "one-office.sidebar";
-const AUTO_SAVE_KEY = "one-office.auto-save";
+const SIDEBAR_KEY = "nim-office.sidebar";
+const AUTO_SAVE_KEY = "nim-office.auto-save";
 const AUTO_SAVE_DELAY = 1500;
 
 function readAutoSavePreference(): boolean {

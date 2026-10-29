@@ -1,13 +1,13 @@
 [package]
-name = "one-office"
+name = "nim-office"
 version = "0.1.0"
 description = "A lightweight cross-platform office suite"
-authors = ["one-office"]
+authors = ["nim-office"]
 edition = "2021"
 rust-version = "1.77"
 
 [lib]
-name = "one_office_lib"
+name = "nim_office_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

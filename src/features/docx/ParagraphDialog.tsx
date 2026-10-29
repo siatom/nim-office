@@ -42,7 +42,7 @@ type Units = Record<MeasureGroup, MeasureUnit>;
 
 const DEFAULT_UNITS: Units = { indent: "char", spacing: "pt" };
 
-const UNIT_STORAGE_KEY = "one-office:paragraph-units";
+const UNIT_STORAGE_KEY = "nim-office:paragraph-units";
 
 const UnitContext = createContext<{
   units: Units;

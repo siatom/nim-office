@@ -147,6 +147,23 @@ function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | nul
         }
         page.append(marks);
       }
+      for (const page of host.querySelectorAll<HTMLElement>(".docx-page")) {
+        const marks = page.querySelector<HTMLElement>(":scope > .oo-page-corner-marks");
+        const content = page.querySelector<HTMLElement>(".docx-page-content");
+        if (!marks || !content) continue;
+        const pageRect = page.getBoundingClientRect();
+        const contentRect = content.getBoundingClientRect();
+        if (!pageRect.width || !pageRect.height) continue;
+        const scaleX = page.offsetWidth ? pageRect.width / page.offsetWidth : 1;
+        const scaleY = page.offsetHeight ? pageRect.height / page.offsetHeight : 1;
+        Object.assign(marks.style, {
+          inset: "auto",
+          left: `${(contentRect.left - pageRect.left) / scaleX}px`,
+          top: `${(contentRect.top - pageRect.top) / scaleY}px`,
+          width: `${contentRect.width / scaleX}px`,
+          height: `${contentRect.height / scaleY}px`,
+        });
+      }
     };
     addMarks();
     const observer = new MutationObserver(addMarks);

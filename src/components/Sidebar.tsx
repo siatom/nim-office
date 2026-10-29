@@ -2,6 +2,8 @@ import {
   FilePlus2,
   FolderOpen,
   Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   Save,
   Settings,
   Sun,
@@ -100,6 +102,7 @@ export function Sidebar({
   onNew,
   onOpen,
   onSave,
+  onToggleSidebar,
   onToggleMode,
   onAccentChange,
   onOpenSettings,
@@ -111,12 +114,14 @@ export function Sidebar({
   onNew: () => void;
   onOpen: () => void;
   onSave: () => void;
+  onToggleSidebar: () => void;
   onToggleMode: () => void;
   onAccentChange: (color: string) => void;
   onOpenSettings: () => void;
 }) {
   const modeLabel = isDark ? "切换到浅色" : "切换到深色";
   const ModeIcon = isDark ? Sun : Moon;
+  const sidebarLabel = collapsed ? "展开侧边栏" : "收起侧边栏";
 
   if (collapsed) {
     return (
@@ -126,6 +131,11 @@ export function Sidebar({
         <RailButton icon={Save} label="保存" onClick={onSave} disabled={!hasActive} />
 
         <div className="mt-auto flex flex-col items-center gap-1 border-t border-line pt-2">
+          <RailButton
+            icon={PanelLeftOpen}
+            label={sidebarLabel}
+            onClick={onToggleSidebar}
+          />
           <RailButton icon={ModeIcon} label={modeLabel} onClick={onToggleMode} />
           <AccentMenu accent={accent} onSelect={onAccentChange} rail />
           <RailButton icon={Settings} label="设置" onClick={onOpenSettings} />
@@ -152,6 +162,11 @@ export function Sidebar({
       </div>
 
       <div className="mt-auto flex items-center justify-between gap-1 border-t border-line pt-2">
+        <RailButton
+          icon={PanelLeftClose}
+          label={sidebarLabel}
+          onClick={onToggleSidebar}
+        />
         <RailButton icon={ModeIcon} label={modeLabel} onClick={onToggleMode} />
         <AccentMenu accent={accent} onSelect={onAccentChange} />
         <RailButton icon={Settings} label="设置" onClick={onOpenSettings} />

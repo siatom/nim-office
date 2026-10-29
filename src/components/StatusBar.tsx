@@ -7,8 +7,6 @@ import {
   Maximize2,
   Minimize2,
   Minus,
-  PanelLeftClose,
-  PanelLeftOpen,
   Plus,
 } from "lucide-react";
 import type { DocumentKind } from "../lib/ipc";
@@ -214,8 +212,6 @@ export function StatusBar({
   onZoomFit,
   onZoomFitPage,
   onToggleFullscreen,
-  sidebarOpen,
-  onToggleSidebar,
 }: {
   name: string | null;
   kind: DocumentKind | null;
@@ -233,61 +229,40 @@ export function StatusBar({
   onZoomFit: () => void;
   onZoomFitPage: () => void;
   onToggleFullscreen: () => void;
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
 }) {
   return (
     <footer className="flex h-7 shrink-0 items-center justify-between gap-4 border-t border-line bg-surface-muted px-3 text-[11px] text-ink-muted">
-      <div className="flex min-w-0 items-center gap-2">
-        {/* Pinned to the bottom-left corner, level with the sidebar it drives. */}
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
-          aria-expanded={sidebarOpen}
-          aria-controls="app-sidebar"
-          title={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
-          className="grid size-5 shrink-0 place-items-center rounded text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink"
-        >
-          {sidebarOpen ? (
-            <PanelLeftClose size={12} strokeWidth={2} />
-          ) : (
-            <PanelLeftOpen size={12} strokeWidth={2} />
-          )}
-        </button>
-        <span className="h-3 w-px shrink-0 bg-line" />
-        <div className="flex min-w-0 items-center gap-3">
-          {name ? (
-            <>
-              <span className="truncate">{name}</span>
-              <span
-                className={clsx(
-                  "flex items-center gap-1",
-                  dirty || !persisted ? "text-accent" : "text-ink-subtle",
-                )}
-              >
-                {saving ? (
-                  <>
-                    <CircleDot size={10} className="animate-pulse" />
-                    保存中
-                  </>
-                ) : dirty || !persisted ? (
-                  <>
-                    <CircleDot size={10} />
-                    未保存
-                  </>
-                ) : (
-                  <>
-                    <CircleCheck size={10} />
-                    已保存
-                  </>
-                )}
-              </span>
-            </>
-          ) : (
-            <span>{hint ?? "就绪"}</span>
-          )}
-        </div>
+      <div className="flex min-w-0 items-center gap-3">
+        {name ? (
+          <>
+            <span className="truncate">{name}</span>
+            <span
+              className={clsx(
+                "flex items-center gap-1",
+                dirty || !persisted ? "text-accent" : "text-ink-subtle",
+              )}
+            >
+              {saving ? (
+                <>
+                  <CircleDot size={10} className="animate-pulse" />
+                  保存中
+                </>
+              ) : dirty || !persisted ? (
+                <>
+                  <CircleDot size={10} />
+                  未保存
+                </>
+              ) : (
+                <>
+                  <CircleCheck size={10} />
+                  已保存
+                </>
+              )}
+            </span>
+          </>
+        ) : (
+          <span>{hint ?? "就绪"}</span>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-3">
         {kind && <span>{KIND_LABEL[kind]}</span>}

@@ -105,6 +105,14 @@ Release build:
 pnpm tauri build
 ```
 
+### Single instance
+
+One Office runs as a single instance: launching it again brings the existing window to the front
+and opens any documents passed on the command line. Dev builds (`pnpm tauri dev`) use a
+`.dev`-suffixed bundle identifier, which gives them their own lock and app-data directory, so a
+dev session and an installed build can run side by side. `pnpm tauri build --debug` counts as a
+build, not as a dev session.
+
 Requires Node 20+, Rust 1.77+, and the platform Tauri prerequisites.
 
 ## Bundle size

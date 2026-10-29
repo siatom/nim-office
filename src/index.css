@@ -373,6 +373,12 @@
   min-height: 100%;
 }
 
+.docx-editor--multi-page .docx-paginated-surface {
+  width: 100% !important;
+  height: max-content !important;
+  min-height: 100%;
+}
+
 .docx-editor--multi-page .docx-pages > .docx-page {
   position: relative !important;
   top: auto !important;

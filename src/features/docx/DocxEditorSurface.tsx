@@ -321,9 +321,20 @@ export default function DocxEditorSurface({
     if (pageWidthAt100 <= 0) return;
 
     const pageCount = Math.max(1, host.querySelectorAll(".docx-pages > .docx-page").length);
+    const columnsAtScale = (scale: number) =>
+      Math.max(
+        1,
+        Math.floor(
+          (availableWidth + MULTI_PAGE_GAP) /
+            (pageWidthAt100 * scale + MULTI_PAGE_GAP),
+        ),
+      );
+    const preferredColumns = columnsAtScale(0.75);
+    const targetColumns =
+      pageCount > 1 && preferredColumns < 2 ? columnsAtScale(0.5) : preferredColumns;
     const columns = Math.min(
       pageCount,
-      Math.max(1, Math.floor((availableWidth + MULTI_PAGE_GAP) / (pageWidthAt100 + MULTI_PAGE_GAP))),
+      targetColumns,
     );
     const nextZoom = Math.min(
       1,

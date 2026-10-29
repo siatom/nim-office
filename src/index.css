@@ -208,16 +208,16 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  width: auto;
-  min-width: 64px;
-  padding: 0 8px;
+  width: 30px;
+  min-width: 30px;
+  padding: 0;
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
+  order: 10;
 }
 
 .docx-editor .oo-toolbar .oo-text-order-1 { order: 1; }

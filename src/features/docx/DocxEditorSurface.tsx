@@ -13,7 +13,7 @@ import {
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { ListTree, Loader2, Pilcrow, Ruler, Scissors, Settings2 } from "lucide-react";
+import { ChevronDown, FilePlus2, FileText, ListTree, Loader2, Pilcrow, Ruler, Settings2, Rows3 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
@@ -199,6 +199,7 @@ export default function DocxEditorSurface({
   // visible, shifting the first page right on a restored window.
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [styleManagerOpen, setStyleManagerOpen] = useState(false);
+  const [breakMenuOpen, setBreakMenuOpen] = useState(false);
   const [pageMarginsOpen, setPageMarginsOpen] = useState(false);
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
@@ -480,9 +481,16 @@ export default function DocxEditorSurface({
               onSelect={() => setPageMarginsOpen(true)}
             />
             <DocxEditor.Toolbar.Group id="document-breaks" label="分隔符" priority={15}>
-              <DocxEditor.Toolbar.Action label="分页符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.pageBreak")} />
-              <DocxEditor.Toolbar.Action label="下一页分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakNextPage")} />
-              <DocxEditor.Toolbar.Action label="连续分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakContinuous")} />
+              <div className="oo-breaks-menu-anchor">
+                <button type="button" className="docx-toolbar__button oo-breaks-trigger" aria-label="插入分隔符" aria-expanded={breakMenuOpen} title="插入分隔符" onClick={() => setBreakMenuOpen((open) => !open)}>
+                  <Rows3 size={17} strokeWidth={1.8} /><ChevronDown size={12} strokeWidth={2} />
+                </button>
+                {breakMenuOpen && <div className="oo-breaks-menu" role="menu">
+                  <button role="menuitem" onClick={() => { executeInsert("insert.pageBreak"); setBreakMenuOpen(false); }}><FileText size={16} /><span><b>分页符</b><small>从下一页继续</small></span></button>
+                  <button role="menuitem" onClick={() => { executeInsert("insert.sectionBreakNextPage"); setBreakMenuOpen(false); }}><FilePlus2 size={16} /><span><b>下一页分节符</b><small>新节从下一页开始</small></span></button>
+                  <button role="menuitem" onClick={() => { executeInsert("insert.sectionBreakContinuous"); setBreakMenuOpen(false); }}><Rows3 size={16} /><span><b>连续分节符</b><small>新节从当前位置开始</small></span></button>
+                </div>}
+              </div>
             </DocxEditor.Toolbar.Group>
             <DocxEditor.Toolbar.Action
               label="管理段落样式"

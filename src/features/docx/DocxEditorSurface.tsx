@@ -20,7 +20,7 @@ import { FindReplacePanel } from "./FindReplacePanel";
 import ParagraphDialog from "./ParagraphDialog";
 import { ParagraphStylePickerContent } from "./ParagraphStylePicker";
 import { ParagraphStyleManager } from "./ParagraphStyleManager";
-import { createDocxEngine, FIT_ZOOM_MODE, nudgeZoom } from "./engine";
+import { createDocxEngine, FIT_ZOOM_MODE, nudgeZoom, type ZoomDisplayMode } from "./engine";
 import { systemFontResolver } from "./system-fonts";
 import type { DocxSurfaceProps } from "./types";
 
@@ -103,11 +103,17 @@ const ENGINE_TEXT: Record<string, string> = {
 };
 
 /** Surfaces zoom changes from the engine (toolbar, shortcuts, window) to the host. */
-function ZoomWatcher({ onChange }: { onChange: (zoom: number) => void }) {
-  const { zoom } = useZoom();
+function ZoomWatcher({
+  onChange,
+  getMode,
+}: {
+  onChange: (zoom: number, mode: ZoomDisplayMode) => void;
+  getMode: () => ZoomDisplayMode;
+}) {
+  const { zoom, isFit } = useZoom();
   useEffect(() => {
-    onChange(zoom);
-  }, [zoom, onChange]);
+    onChange(zoom, isFit ? "page-width" : getMode());
+  }, [zoom, isFit, onChange, getMode]);
   return null;
 }
 
@@ -150,19 +156,63 @@ export default function DocxEditorSurface({
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
+  const zoomModeRef = useRef<ZoomDisplayMode>("page-width");
   const fitTimerRef = useRef<number | null>(null);
   const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
+  const getZoomMode = useCallback(() => zoomModeRef.current, []);
+
+  const fitPageToViewport = useCallback(() => {
+    const editor = editorRef.current;
+    const host = hostRef.current;
+    const viewport = host?.querySelector<HTMLElement>(
+      ".docx-editor-one-surface__viewport, .docx-pages",
+    );
+    const page = host?.querySelector<HTMLElement>(".docx-page");
+    if (!editor || !viewport || !page) return;
+
+    const pageRect = page.getBoundingClientRect();
+    if (
+      viewport.clientWidth <= 0 ||
+      viewport.clientHeight <= 0 ||
+      pageRect.width <= 0 ||
+      pageRect.height <= 0
+    ) {
+      return;
+    }
+
+    const viewportStyle = window.getComputedStyle(viewport);
+    const horizontalPadding =
+      Number.parseFloat(viewportStyle.paddingLeft) + Number.parseFloat(viewportStyle.paddingRight);
+    const verticalPadding =
+      Number.parseFloat(viewportStyle.paddingTop) + Number.parseFloat(viewportStyle.paddingBottom);
+    const availableWidth = Math.max(1, viewport.clientWidth - horizontalPadding - 32);
+    const availableHeight = Math.max(1, viewport.clientHeight - verticalPadding - 32);
+    const factor = Math.min(
+      availableWidth / pageRect.width,
+      availableHeight / pageRect.height,
+    );
+    const nextZoom = Math.min(5, Math.max(0.1, editor.getZoom() * factor));
+    zoomModeRef.current = "page";
+    editor.setZoom(nextZoom);
+    propsRef.current.onZoomChange(editor.getZoom(), "page");
+  }, []);
 
   const refitPage = useCallback(() => {
     const editor = editorRef.current;
-    if (!editor || editor.getZoomMode().type !== "fit") return;
+    if (!editor) return;
+    if (zoomModeRef.current === "page") {
+      fitPageToViewport();
+      return;
+    }
+    if (editor.getZoomMode().type !== "fit") return;
     // Pinning the scale first makes the engine measure the latest available width.
     editor.setZoomMode({ type: "fixed" });
     editor.setZoomMode(FIT_ZOOM_MODE);
+    zoomModeRef.current = "page-width";
     // The fit lands after a layout pass, which the zoom subscription can miss;
     // report it here so the status bar never sits on a stale 100%.
-    propsRef.current.onZoomChange(editor.getZoom());
-  }, [outlineOpen]);
+    propsRef.current.onZoomChange(editor.getZoom(), "page-width");
+  }, [fitPageToViewport]);
 
   const scheduleRefit = useCallback(() => {
     if (fitTimerRef.current !== null) window.clearTimeout(fitTimerRef.current);
@@ -220,6 +270,7 @@ export default function DocxEditorSurface({
       const now = performance.now();
       if (now - lastStep < WHEEL_ZOOM_INTERVAL_MS) return;
       lastStep = now;
+      zoomModeRef.current = "fixed";
       nudgeZoom(editor, event.deltaY < 0 ? WHEEL_ZOOM_STEP : -WHEEL_ZOOM_STEP);
     };
     host.addEventListener("wheel", onWheel, { passive: false });
@@ -279,9 +330,17 @@ export default function DocxEditorSurface({
     setLoading(false);
     // The editor may report ready before the restored window has its final size.
     scheduleRefit();
-    propsRef.current.onReady(createDocxEngine(editor));
-    propsRef.current.onZoomChange(editor.getZoom());
-  }, [refitPage, scheduleRefit]);
+    propsRef.current.onReady(
+      createDocxEngine(editor, {
+        get: () => zoomModeRef.current,
+        set: (mode) => {
+          zoomModeRef.current = mode;
+        },
+        fitPage: fitPageToViewport,
+      }),
+    );
+    propsRef.current.onZoomChange(editor.getZoom(), zoomModeRef.current);
+  }, [fitPageToViewport, refitPage, scheduleRefit]);
 
   const handleChange = useCallback((change: DocumentChange) => {
     // The initial mount reports a `load` change; everything after it is a user edit.
@@ -398,7 +457,10 @@ export default function DocxEditorSurface({
             </DocxEditor.Viewport>
           </div>
           <DocxEditor.FontNotice />
-          <ZoomWatcher onChange={onZoomChange} />
+          <ZoomWatcher
+            onChange={onZoomChange}
+            getMode={getZoomMode}
+          />
           <OpenFailureWatcher onFailure={handleFailure} />
         </DocxEditor.Root>
       </LocaleProvider>

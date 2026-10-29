@@ -105,6 +105,15 @@ export function TitleBar({
 
   return (
     <header
+      onDoubleClick={(event) => {
+        if (
+          event.target instanceof Element &&
+          event.target.closest("button")
+        ) {
+          return;
+        }
+        void win.toggleMaximize();
+      }}
       onPointerDown={(event) => {
         if (
           event.button !== 0 ||

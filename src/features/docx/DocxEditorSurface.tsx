@@ -9,7 +9,7 @@ import {
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { Loader2 } from "lucide-react";
+import { ListTree, Loader2 } from "lucide-react";
 
 import { createDocxEngine } from "./engine";
 import { systemFontResolver } from "./system-fonts";
@@ -46,6 +46,9 @@ const THEME_VARS = {
  * defaults to 16 MiB, which would silently fall back for Chinese documents.
  */
 const SHAPING = { maxFontBytes: 64 * 1024 * 1024 };
+
+/** The document-structure pane is a view preference, persisted like the sidebar. */
+const OUTLINE_KEY = "one-office.outline";
 
 /**
  * The engine returns a few refusal reasons as English prose that its locale
@@ -109,7 +112,14 @@ export default function DocxEditorSurface({
   const [initialDocument] = useState(() => (bytes.length > 0 ? bytes : ("blank" as const)));
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<string | null>(null);
+  const [outlineOpen, setOutlineOpen] = useState(
+    () => localStorage.getItem(OUTLINE_KEY) !== "closed",
+  );
   const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem(OUTLINE_KEY, outlineOpen ? "open" : "closed");
+  }, [outlineOpen]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -198,12 +208,28 @@ export default function DocxEditorSurface({
             {/* No Pro review module is installed, so the comment/tracked-change
                 group would only render a disabled control. */}
             <DocxEditor.Toolbar.Group id="review" hidden />
+            <DocxEditor.Toolbar.Action
+              label="文档结构图"
+              icon={<ListTree size={18} strokeWidth={1.8} />}
+              active={outlineOpen}
+              onSelect={() => setOutlineOpen((open) => !open)}
+            />
           </DocxEditor.Toolbar>
-          <DocxEditor.Viewport style={{ flex: 1, minHeight: 0 }}>
-            <DocxEditor.Content />
-            <DocxEditor.HyperLink />
-            <DocxEditor.ContextMenu />
-          </DocxEditor.Viewport>
+          <div className="relative flex min-h-0 flex-1">
+            {/* Headings, find and go-to over the left gutter. The toolbar action is
+                the entry point, so the engine's floating disc is suppressed. */}
+            <DocxEditor.Navigation
+              defaultTab="headings"
+              open={outlineOpen}
+              onOpenChange={setOutlineOpen}
+              toggle={false}
+            />
+            <DocxEditor.Viewport style={{ flex: 1, minHeight: 0 }}>
+              <DocxEditor.Content />
+              <DocxEditor.HyperLink />
+              <DocxEditor.ContextMenu />
+            </DocxEditor.Viewport>
+          </div>
           <DocxEditor.FontNotice />
           <ZoomWatcher onChange={onZoomChange} />
           <OpenFailureWatcher onFailure={handleFailure} />

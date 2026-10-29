@@ -41,6 +41,10 @@ A frameless window with a custom title bar and a left sidebar instead of a nativ
 Shortcuts: `Ctrl+N` new, `Ctrl+O` open, `Ctrl+S` save, `Ctrl+Shift+S` save as,
 `Ctrl+W` close tab, `Ctrl+=` / `Ctrl+-` / `Ctrl+0` zoom.
 
+The **文档结构图** action at the end of the toolbar opens the document navigation pane over the
+left gutter: a live headings outline (click a row to jump to it), Find (`Ctrl+F`), and Go to
+bookmark (`Ctrl+G`). The pane's open state is remembered across restarts.
+
 The appearance panel at the bottom of the sidebar offers light / dark / system mode, eight accent
 presets, and a custom colour picker. The accent is persisted locally and repaints buttons,
 selection highlights, the app mark, and the document editor's toolbar chrome.
@@ -77,7 +81,7 @@ src-tauri/                 Rust backend
 src/
   App.tsx                  Tab workspace, open/save/close orchestration, shortcuts
   components/              Title bar, sidebar, tab bar, status bar, dialogs, toasts
-  features/docx/           lazy docx-editor mount, engine adapter, system fonts
+  features/docx/           lazy docx-editor mount, engine adapter, navigation pane, system fonts
   lib/accents.ts           Accent presets and contrast-safe ink for custom colours
   lib/ipc.ts               Typed wrappers around invoke()
 ```

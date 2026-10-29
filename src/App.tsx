@@ -5,7 +5,7 @@ import clsx from "clsx";
 
 import { TitleBar } from "./components/TitleBar";
 import { Sidebar } from "./components/Sidebar";
-import { TabBar, type TabDescriptor } from "./components/TabBar";
+import type { TabDescriptor } from "./components/TabBar";
 import { StatusBar } from "./components/StatusBar";
 import { EmptyState } from "./components/EmptyState";
 import { DropOverlay } from "./components/DropOverlay";
@@ -39,6 +39,7 @@ interface DocTab {
 }
 
 const SUPPORTED: DocumentKind[] = ["docx"];
+const SIDEBAR_KEY = "one-office.sidebar";
 
 function errorMessage(error: unknown): string {
   if (typeof error === "string") return error;
@@ -60,6 +61,9 @@ export default function App() {
     { kind: "tab"; id: string } | { kind: "window" } | null
   >(null);
   const [dragging, setDragging] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => localStorage.getItem(SIDEBAR_KEY) !== "collapsed",
+  );
 
   const handles = useRef(new Map<string, DocxEngineHandle>());
   const tabsRef = useRef(tabs);
@@ -76,6 +80,14 @@ export default function App() {
   const dismissToast = useCallback((id: number) => {
     setToasts((prev) => prev.filter((item) => item.id !== id));
   }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((open) => !open);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_KEY, sidebarOpen ? "open" : "collapsed");
+  }, [sidebarOpen]);
 
   const patchTab = useCallback((id: string, patch: Partial<DocTab>) => {
     setTabs((prev) => prev.map((tab) => (tab.id === id ? { ...tab, ...patch } : tab)));
@@ -390,42 +402,50 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-bg">
-      <TitleBar subtitle={activeTab?.name} />
+      <TitleBar
+        tabs={tabDescriptors}
+        activeId={activeId}
+        sidebarOpen={sidebarOpen}
+        onSelectTab={setActiveId}
+        onCloseTab={requestClose}
+        onNewTab={handleNew}
+        onToggleSidebar={toggleSidebar}
+      />
 
       <div className="flex min-h-0 flex-1">
-        <Sidebar
-          recent={recent}
-          hasActive={activeTab !== null}
-          mode={mode}
-          accent={accent}
-          onNew={handleNew}
-          onOpen={handleOpen}
-          onSave={() => {
-            if (activeId) void saveTab(activeId);
-          }}
-          onOpenRecent={(entry) => void openPaths([entry.path])}
-          onRemoveRecent={async (entry) => {
-            try {
-              setRecent(await removeRecent(entry.path));
-            } catch (error) {
-              pushToast("error", errorMessage(error));
-            }
-          }}
-          onModeChange={setMode}
-          onAccentChange={selectAccent}
-        />
+        <div
+          id="app-sidebar"
+          className={clsx(
+            "relative shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none",
+            sidebarOpen ? "w-[212px]" : "w-0",
+          )}
+          aria-hidden={!sidebarOpen}
+          inert={!sidebarOpen}
+        >
+          <Sidebar
+            recent={recent}
+            hasActive={activeTab !== null}
+            mode={mode}
+            accent={accent}
+            onNew={handleNew}
+            onOpen={handleOpen}
+            onSave={() => {
+              if (activeId) void saveTab(activeId);
+            }}
+            onOpenRecent={(entry) => void openPaths([entry.path])}
+            onRemoveRecent={async (entry) => {
+              try {
+                setRecent(await removeRecent(entry.path));
+              } catch (error) {
+                pushToast("error", errorMessage(error));
+              }
+            }}
+            onModeChange={setMode}
+            onAccentChange={selectAccent}
+          />
+        </div>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          {tabs.length > 0 && (
-            <TabBar
-              tabs={tabDescriptors}
-              activeId={activeId}
-              onSelect={setActiveId}
-              onClose={requestClose}
-              onNew={handleNew}
-            />
-          )}
-
           <div className="relative min-h-0 flex-1">
             {tabs.length === 0 && <EmptyState onOpen={handleOpen} onNew={handleNew} />}
 

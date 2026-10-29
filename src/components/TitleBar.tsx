@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Copy, Minus, Square, X } from "lucide-react";
+import { Copy, Minus, PanelLeftClose, PanelLeftOpen, Square, X } from "lucide-react";
 import clsx from "clsx";
 import { Logo } from "./Logo";
+import { TabBar, type TabDescriptor } from "./TabBar";
 
 const isMac = navigator.userAgent.includes("Mac");
 
@@ -24,7 +25,7 @@ function WindowButton({
       aria-label={label}
       title={label}
       className={clsx(
-        "grid h-9 w-[46px] place-items-center text-ink-muted transition-colors",
+        "grid h-full w-[46px] place-items-center text-ink-muted transition-colors",
         danger
           ? "hover:bg-[#e81123] hover:text-white"
           : "hover:bg-line/70 hover:text-ink",
@@ -35,7 +36,23 @@ function WindowButton({
   );
 }
 
-export function TitleBar({ subtitle }: { subtitle?: string }) {
+export function TitleBar({
+  tabs,
+  activeId,
+  sidebarOpen,
+  onSelectTab,
+  onCloseTab,
+  onNewTab,
+  onToggleSidebar,
+}: {
+  tabs: TabDescriptor[];
+  activeId: string | null;
+  sidebarOpen: boolean;
+  onSelectTab: (id: string) => void;
+  onCloseTab: (id: string) => void;
+  onNewTab: () => void;
+  onToggleSidebar: () => void;
+}) {
   const [maximized, setMaximized] = useState(false);
 
   useEffect(() => {
@@ -54,12 +71,30 @@ export function TitleBar({ subtitle }: { subtitle?: string }) {
   return (
     <header
       data-tauri-drag-region
-      className="flex h-9 shrink-0 select-none items-center bg-surface-muted"
+      className="flex h-9 shrink-0 select-none items-center border-b border-line bg-bg"
     >
       <div
         data-tauri-drag-region
-        className={clsx("flex items-center gap-2", isMac ? "pl-20" : "pl-3")}
+        className={clsx(
+          "flex shrink-0 items-center gap-2 pr-1",
+          isMac ? "pl-20" : "pl-2",
+        )}
       >
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
+          aria-expanded={sidebarOpen}
+          aria-controls="app-sidebar"
+          title={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
+          className="grid size-7 shrink-0 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+        >
+          {sidebarOpen ? (
+            <PanelLeftClose size={15} strokeWidth={1.8} />
+          ) : (
+            <PanelLeftOpen size={15} strokeWidth={1.8} />
+          )}
+        </button>
         <Logo size={16} />
         <span
           data-tauri-drag-region
@@ -67,17 +102,24 @@ export function TitleBar({ subtitle }: { subtitle?: string }) {
         >
           One Office
         </span>
-        {subtitle && (
-          <span data-tauri-drag-region className="truncate text-[11.5px] text-ink-subtle">
-            {subtitle}
-          </span>
-        )}
       </div>
 
-      <div data-tauri-drag-region className="h-full flex-1" />
+      {tabs.length > 0 ? (
+        <div className="flex min-w-0 flex-1 items-center gap-1 pl-2">
+          <TabBar
+            tabs={tabs}
+            activeId={activeId}
+            onSelect={onSelectTab}
+            onClose={onCloseTab}
+            onNew={onNewTab}
+          />
+        </div>
+      ) : (
+        <div data-tauri-drag-region className="h-full flex-1" />
+      )}
 
       {!isMac && (
-        <div className="flex h-full items-stretch">
+        <div className="ml-2 flex h-full shrink-0 items-stretch">
           <WindowButton label="最小化" onClick={() => void win.minimize()}>
             <Minus size={14} />
           </WindowButton>

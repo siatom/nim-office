@@ -34,7 +34,7 @@ function TabButton({
   return (
     <div
       className={clsx(
-        "group relative flex h-7 max-w-[220px] shrink-0 items-center gap-1.5 rounded-lg pl-2 pr-1 transition-colors",
+        "group relative flex h-7 max-w-[200px] shrink-0 items-center gap-1.5 rounded-md pl-2 pr-1 transition-colors",
         active
           ? "bg-surface text-ink shadow-sm"
           : "text-ink-muted hover:bg-surface/60 hover:text-ink",
@@ -72,6 +72,7 @@ function TabButton({
   );
 }
 
+/** Tab strip that lives inside the window title bar. */
 export function TabBar({
   tabs,
   activeId,
@@ -86,8 +87,11 @@ export function TabBar({
   onNew: () => void;
 }) {
   return (
-    <div className="flex h-10 shrink-0 items-center gap-1 border-b border-line bg-bg px-2">
-      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <>
+      <div
+        data-tauri-drag-region
+        className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {tabs.map((tab) => (
           <TabButton
             key={tab.id}
@@ -102,10 +106,11 @@ export function TabBar({
         type="button"
         onClick={onNew}
         aria-label="新建文档"
-        className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+        title="新建文档"
+        className="grid size-7 shrink-0 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface hover:text-ink"
       >
         <Plus size={15} />
       </button>
-    </div>
+    </>
   );
 }

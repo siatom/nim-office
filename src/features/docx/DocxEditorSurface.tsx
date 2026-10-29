@@ -200,6 +200,7 @@ export default function DocxEditorSurface({
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [styleManagerOpen, setStyleManagerOpen] = useState(false);
   const [breakMenuOpen, setBreakMenuOpen] = useState(false);
+  const [paragraphMarksVisible, setParagraphMarksVisible] = useState(false);
   const breaksAnchorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!breakMenuOpen) return;
@@ -231,7 +232,9 @@ export default function DocxEditorSurface({
   }, []);
   const toggleParagraphMarks = useCallback(() => {
     const command = commandForSlot("review.paragraphMarks");
-    if (command) editorRef.current?.exec(command);
+    if (command && editorRef.current?.exec(command)) {
+      setParagraphMarksVisible(hostRef.current?.querySelector(".docx-show-paragraph-marks") !== null);
+    }
   }, []);
 
   const fitPageToViewport = useCallback(() => {
@@ -484,6 +487,8 @@ export default function DocxEditorSurface({
               className="docx-toolbar__button oo-paragraph-marks-button"
               aria-label="显示段落标记"
               title="显示段落标记"
+              aria-pressed={paragraphMarksVisible}
+              data-active={paragraphMarksVisible ? "" : undefined}
               onClick={toggleParagraphMarks}
             >
               <Pilcrow size={18} strokeWidth={1.9} />

@@ -518,6 +518,98 @@ export default function DocxEditorSurface({
   }, []);
 
   useEffect(() => {
+    const host = hostRef.current;
+    const viewport = host?.querySelector<HTMLElement>(".docx-editor__scroll-container");
+    if (!host || !viewport) return;
+
+    let frame = 0;
+    let settleTimer = 0;
+    let focusedPageIndex = 0;
+    const syncRulerPosition = () => {
+      frame = 0;
+      const pages = [...host.querySelectorAll<HTMLElement>(".docx-pages > .docx-page")];
+      const firstPage = pages[0];
+      const selection = document.getSelection();
+      const anchor = selection?.anchorNode;
+      const selectionPage = anchor instanceof Element
+        ? anchor.closest<HTMLElement>(".docx-page")
+        : anchor?.parentElement?.closest<HTMLElement>(".docx-page");
+      const selectedPageIndex = Number(selectionPage?.dataset.pageIndex);
+      if (selectionPage && host.contains(selectionPage) && Number.isFinite(selectedPageIndex)) {
+        focusedPageIndex = selectedPageIndex;
+      }
+      const focusedPage = pages.find((page) => Number(page.dataset.pageIndex) === focusedPageIndex) ?? firstPage;
+      const horizontalRuler = host.querySelector<HTMLElement>(".docx-horizontal-ruler");
+      const verticalRuler = host.querySelector<HTMLElement>(".docx-vertical-ruler");
+
+      if (!firstPage || !focusedPage || !horizontalRuler || !verticalRuler) {
+        for (const property of [
+          "--oo-focused-ruler-horizontal-x",
+          "--oo-focused-ruler-horizontal-y",
+          "--oo-focused-ruler-vertical-x",
+          "--oo-focused-ruler-vertical-y",
+        ]) host.style.setProperty(property, "0px");
+        return;
+      }
+
+      const focusedRect = focusedPage.getBoundingClientRect();
+      const horizontalRect = horizontalRuler.getBoundingClientRect();
+      const verticalRect = verticalRuler.getBoundingClientRect();
+      const horizontalX = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-horizontal-x")) || 0;
+      const horizontalY = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-horizontal-y")) || 0;
+      const verticalX = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-vertical-x")) || 0;
+      const verticalY = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-vertical-y")) || 0;
+      const rulerGap = 24;
+
+      host.style.setProperty(
+        "--oo-focused-ruler-horizontal-x",
+        `${horizontalX + focusedRect.left - horizontalRect.left}px`,
+      );
+      host.style.setProperty(
+        "--oo-focused-ruler-horizontal-y",
+        `${horizontalY + focusedRect.top - horizontalRect.height - horizontalRect.top}px`,
+      );
+      host.style.setProperty(
+        "--oo-focused-ruler-vertical-x",
+        `${verticalX + focusedRect.left - rulerGap - verticalRect.left}px`,
+      );
+      host.style.setProperty(
+        "--oo-focused-ruler-vertical-y",
+        `${verticalY + focusedRect.top - rulerGap - verticalRect.top}px`,
+      );
+    };
+    const scheduleSync = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(syncRulerPosition);
+    };
+
+    document.addEventListener("selectionchange", scheduleSync);
+    viewport.addEventListener("scroll", scheduleSync, { passive: true });
+    host.addEventListener("transitionend", scheduleSync);
+    const observer = new MutationObserver(() => {
+      scheduleSync();
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(scheduleSync, PANE_SETTLE_MS);
+    });
+    observer.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+    const resizeObserver = new ResizeObserver(scheduleSync);
+    resizeObserver.observe(viewport);
+    const pages = host.querySelector<HTMLElement>(".docx-pages");
+    if (pages) resizeObserver.observe(pages);
+    scheduleSync();
+
+    return () => {
+      document.removeEventListener("selectionchange", scheduleSync);
+      viewport.removeEventListener("scroll", scheduleSync);
+      host.removeEventListener("transitionend", scheduleSync);
+      observer.disconnect();
+      resizeObserver.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+      window.clearTimeout(settleTimer);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!multiPage) return;
     const editor = editorRef.current;
     if (!editor) return;

@@ -24,29 +24,29 @@
 .oo-page-corner-mark--top-left {
   top: 0;
   left: 0;
-  border-right-width: 1.5px;
-  border-bottom-width: 1.5px;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
 }
 
 .oo-page-corner-mark--top-right {
   top: 0;
   right: 0;
-  border-left-width: 1.5px;
-  border-bottom-width: 1.5px;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
 }
 
 .oo-page-corner-mark--bottom-left {
   bottom: 0;
   left: 0;
-  border-top-width: 1.5px;
-  border-right-width: 1.5px;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
 }
 
 .oo-page-corner-mark--bottom-right {
   right: 0;
   bottom: 0;
-  border-top-width: 1.5px;
-  border-left-width: 1.5px;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));

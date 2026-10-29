@@ -633,6 +633,7 @@ export default function App() {
             onSave={() => {
               if (activeId) void saveTab(activeId);
             }}
+            onToggleSidebar={toggleSidebar}
             onToggleMode={toggleMode}
             onAccentChange={selectAccent}
             onOpenSettings={() => setSettingsOpen(true)}
@@ -715,8 +716,6 @@ export default function App() {
         onZoomFit={zoomFit}
         onZoomFitPage={zoomFitPage}
         onToggleFullscreen={() => void toggleFullscreen()}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={toggleSidebar}
         hint={recent.length > 0 ? "Ctrl + O 打开文档" : "就绪"}
       />
 

@@ -8,11 +8,12 @@ import {
   useZoom,
   type Editor,
   type NavigationTabValue,
+  commandForSlot,
 } from "@docx-editor.dev/react";
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { ListTree, Loader2, Ruler, Settings2 } from "lucide-react";
+import { ListTree, Loader2, Ruler, Scissors, Settings2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
@@ -206,6 +207,10 @@ export default function DocxEditorSurface({
   const fitTimerRef = useRef<number | null>(null);
   const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
   const getZoomMode = useCallback(() => zoomModeRef.current, []);
+  const executeInsert = useCallback((slot: "insert.pageBreak" | "insert.sectionBreakNextPage" | "insert.sectionBreakContinuous") => {
+    const command = commandForSlot(slot);
+    if (command) editorRef.current?.exec(command);
+  }, []);
 
   const fitPageToViewport = useCallback(() => {
     const editor = editorRef.current;
@@ -461,6 +466,9 @@ export default function DocxEditorSurface({
               icon={<Ruler size={18} strokeWidth={1.8} />}
               onSelect={() => setPageMarginsOpen(true)}
             />
+            <DocxEditor.Toolbar.Action label="分页符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.pageBreak")} />
+            <DocxEditor.Toolbar.Action label="下一页分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakNextPage")} />
+            <DocxEditor.Toolbar.Action label="连续分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakContinuous")} />
             <DocxEditor.Toolbar.Action
               label="管理段落样式"
               icon={<Settings2 size={18} strokeWidth={1.8} />}

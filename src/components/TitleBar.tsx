@@ -65,7 +65,7 @@ export function TitleBar({ subtitle }: { subtitle?: string }) {
           data-tauri-drag-region
           className="text-[12px] font-medium tracking-tight text-ink"
         >
-          one-office
+          One Office
         </span>
         {subtitle && (
           <span data-tauri-drag-region className="truncate text-[11.5px] text-ink-subtle">

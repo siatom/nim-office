@@ -1,4 +1,4 @@
-# one-office
+# One Office
 
 A cross-platform, lightweight office suite built with Tauri 2.
 
@@ -22,7 +22,7 @@ A frameless window with a custom title bar and a left sidebar instead of a nativ
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│ logo  one-office  <file>              ─  □  ×        │  custom title bar (drag region)
+│ logo  One Office  <file>              ─  □  ×        │  custom title bar (drag region)
 ├────────────┬─────────────────────────────────────────┤
 │ New        │  tab · tab · tab                     +  │
 │ Open       ├─────────────────────────────────────────┤

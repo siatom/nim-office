@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "one-office",
+  "version": "0.1.0",
+  "identifier": "com.oneoffice.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1430",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "one-office",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 600,
+        "center": true,
+        "decorations": false,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost blob: data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      { "ext": ["docx"], "name": "Word Document", "description": "Word document", "role": "Editor" },
+      { "ext": ["xlsx"], "name": "Excel Workbook", "description": "Excel workbook", "role": "Editor" },
+      { "ext": ["pptx"], "name": "PowerPoint Presentation", "description": "PowerPoint presentation", "role": "Editor" },
+      { "ext": ["pdf"], "name": "PDF Document", "description": "PDF document", "role": "Viewer" }
+    ]
+  }
+}

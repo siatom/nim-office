@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import {
   DocxEditor,
   LocaleProvider,
+  NAVIGATION_PANE_WIDTH,
   definePopup,
   useOpenFailure,
   useZoom,
@@ -14,7 +15,7 @@ import { ListTree, Loader2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import ParagraphDialog from "./ParagraphDialog";
-import { createDocxEngine } from "./engine";
+import { createDocxEngine, FIT_ZOOM_MODE } from "./engine";
 import { systemFontResolver } from "./system-fonts";
 import type { DocxSurfaceProps } from "./types";
 
@@ -52,6 +53,13 @@ const SHAPING = { maxFontBytes: 64 * 1024 * 1024 };
 
 /** The document-structure pane is a view preference, persisted like the sidebar. */
 const OUTLINE_KEY = "one-office.outline";
+
+/**
+ * Below this viewport width the packaged pane would switch to covering the page
+ * instead of sitting beside it, so the pane narrows first.
+ */
+const NARROW_VIEWPORT = 720;
+const NARROW_PANE_WIDTH = 260;
 
 /**
  * The engine returns a few refusal reasons as English prose that its locale
@@ -126,10 +134,25 @@ export default function DocxEditorSurface({
     () => localStorage.getItem(OUTLINE_KEY) !== "closed",
   );
   const hostRef = useRef<HTMLDivElement>(null);
+  const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
 
   useEffect(() => {
     localStorage.setItem(OUTLINE_KEY, outlineOpen ? "open" : "closed");
   }, [outlineOpen]);
+
+  // The engine covers the page with the pane when the viewport cannot hold both,
+  // so a narrow window gets a narrower pane instead of a half-hidden document.
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setPaneWidth(
+        entry.contentRect.width < NARROW_VIEWPORT ? NARROW_PANE_WIDTH : NAVIGATION_PANE_WIDTH,
+      );
+    });
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -206,6 +229,7 @@ export default function DocxEditorSurface({
           document={initialDocument}
           mode="edit"
           locale="zh-CN"
+          zoomMode={FIT_ZOOM_MODE}
           // The packaged zh-CN catalogue covers every UI string. Names that
           // still read as English here (e.g. "Normal", "Calibri") come from the
           // document's own styles and fonts, and must not be rewritten.
@@ -242,6 +266,7 @@ export default function DocxEditorSurface({
               open={outlineOpen}
               onOpenChange={setOutlineOpen}
               toggle={false}
+              paneWidth={paneWidth}
             />
             <DocxEditor.Viewport style={{ flex: 1, minHeight: 0 }}>
               <DocxEditor.Content />

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Copy, Minus, PanelLeftClose, PanelLeftOpen, Square, X } from "lucide-react";
+import { Copy, Minus, Square, X } from "lucide-react";
 import clsx from "clsx";
 import { Logo } from "./Logo";
 import { TabBar, type TabDescriptor } from "./TabBar";
@@ -40,20 +40,16 @@ function WindowButton({
 export function TitleBar({
   tabs,
   activeId,
-  sidebarOpen,
   onSelectTab,
   onCloseTab,
   onNewTab,
-  onToggleSidebar,
   onShowWelcome,
 }: {
   tabs: TabDescriptor[];
   activeId: string | null;
-  sidebarOpen: boolean;
   onSelectTab: (id: string) => void;
   onCloseTab: (id: string) => void;
   onNewTab: () => void;
-  onToggleSidebar: () => void;
   onShowWelcome: () => void;
 }) {
   const [maximized, setMaximized] = useState(false);
@@ -136,21 +132,6 @@ export function TitleBar({
           isMac ? "pl-20" : "pl-2",
         )}
       >
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
-          aria-expanded={sidebarOpen}
-          aria-controls="app-sidebar"
-          title={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
-          className="grid size-7 shrink-0 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-        >
-          {sidebarOpen ? (
-            <PanelLeftClose size={15} strokeWidth={1.8} />
-          ) : (
-            <PanelLeftOpen size={15} strokeWidth={1.8} />
-          )}
-        </button>
         <button
           type="button"
           onClick={onShowWelcome}

@@ -609,11 +609,9 @@ export default function App() {
       <TitleBar
         tabs={tabDescriptors}
         activeId={activeId}
-        sidebarOpen={sidebarOpen}
         onSelectTab={selectTab}
         onCloseTab={requestClose}
         onNewTab={handleNew}
-        onToggleSidebar={toggleSidebar}
         onShowWelcome={() => setWelcomeOpen(true)}
       />
 
@@ -717,6 +715,8 @@ export default function App() {
         onZoomFit={zoomFit}
         onZoomFitPage={zoomFitPage}
         onToggleFullscreen={() => void toggleFullscreen()}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={toggleSidebar}
         hint={recent.length > 0 ? "Ctrl + O 打开文档" : "就绪"}
       />
 

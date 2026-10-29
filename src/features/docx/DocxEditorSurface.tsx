@@ -479,9 +479,11 @@ export default function DocxEditorSurface({
               icon={<Ruler size={18} strokeWidth={1.8} />}
               onSelect={() => setPageMarginsOpen(true)}
             />
-            <DocxEditor.Toolbar.Action label="分页符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.pageBreak")} />
-            <DocxEditor.Toolbar.Action label="下一页分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakNextPage")} />
-            <DocxEditor.Toolbar.Action label="连续分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakContinuous")} />
+            <DocxEditor.Toolbar.Group id="document-breaks" label="分隔符" priority={15}>
+              <DocxEditor.Toolbar.Action label="分页符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.pageBreak")} />
+              <DocxEditor.Toolbar.Action label="下一页分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakNextPage")} />
+              <DocxEditor.Toolbar.Action label="连续分节符" icon={<Scissors size={18} strokeWidth={1.8} />} onSelect={() => executeInsert("insert.sectionBreakContinuous")} />
+            </DocxEditor.Toolbar.Group>
             <DocxEditor.Toolbar.Action
               label="管理段落样式"
               icon={<Settings2 size={18} strokeWidth={1.8} />}

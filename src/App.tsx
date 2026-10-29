@@ -114,6 +114,8 @@ export default function App() {
     setAgentSettings(settings);
   }, []);
 
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+
   const dismissToast = useCallback((id: number) => {
     setToasts((prev) => prev.filter((item) => item.id !== id));
   }, []);
@@ -760,7 +762,7 @@ export default function App() {
         open={settingsOpen}
         autoSave={autoSave}
         onAutoSaveChange={setAutoSave}
-        onClose={() => setSettingsOpen(false)}
+        onClose={closeSettings}
         agentSettings={agentSettings}
         onAgentSettingsChange={updateAgentSettings}
       />

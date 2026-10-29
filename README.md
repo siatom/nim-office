@@ -43,7 +43,7 @@ Shortcuts: `Ctrl+N` new, `Ctrl+O` open, `Ctrl+S` save, `Ctrl+Shift+S` save as,
 
 The **文档结构图** action at the end of the toolbar opens the document navigation pane over the
 left gutter: a live headings outline (click a row to jump to it), Find (`Ctrl+F`), and Go to
-bookmark (`Ctrl+G`). The pane's open state is remembered across restarts.
+bookmark (`Ctrl+G`). It opens on demand so documents start centred in the full editor viewport.
 
 The appearance panel at the bottom of the sidebar offers light / dark / system mode, eight accent
 presets, and a custom colour picker. The accent is persisted locally and repaints buttons,

@@ -134,6 +134,13 @@
   background: var(--bg);
 }
 
+/* docx-editor uses --docx-nav-shift to reserve the structure pane. Its own
+   state can briefly retain that shift after a document mounts; override the
+   variable while the pane is closed so the first page uses the full viewport. */
+.docx-editor .oo-docx-viewport--no-outline {
+  --docx-nav-shift: 0px !important;
+}
+
 /* Unit picker inside the Paragraph dialog's measurement rows. It sits where the
    packaged controls put their static unit label, so it reads as a label that
    happens to be editable rather than as a second input. */

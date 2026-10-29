@@ -53,9 +53,6 @@ const THEME_VARS = {
  */
 const SHAPING = { maxFontBytes: 64 * 1024 * 1024 };
 
-/** The document-structure pane is a view preference, persisted like the sidebar. */
-const OUTLINE_KEY = "one-office.outline";
-
 /**
  * Below this viewport width the packaged pane would switch to covering the page
  * instead of sitting beside it, so the pane narrows first.
@@ -64,9 +61,6 @@ const NARROW_VIEWPORT = 720;
 const NARROW_PANE_WIDTH = 260;
 /** Long enough for the pane's slide to finish before the page is re-fitted. */
 const PANE_SETTLE_MS = 240;
-/** The element the engine pads to make room for the pane. */
-const SCROLLER = ".docx-editor__scroll-container";
-
 /**
  * The engine returns a few refusal reasons as English prose that its locale
  * catalogue does not key. Translate the ones reachable from this toolbar;
@@ -136,9 +130,10 @@ export default function DocxEditorSurface({
   const [initialDocument] = useState(() => (bytes.length > 0 ? bytes : ("blank" as const)));
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<string | null>(null);
-  const [outlineOpen, setOutlineOpen] = useState(
-    () => localStorage.getItem(OUTLINE_KEY) !== "closed",
-  );
+  // Start every document with the structure pane closed. Restoring an old open
+  // preference makes the editor reserve its pane gutter before the pane is
+  // visible, shifting the first page right on a restored window.
+  const [outlineOpen, setOutlineOpen] = useState(false);
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
@@ -146,13 +141,6 @@ export default function DocxEditorSurface({
   const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
 
   const refitPage = useCallback(() => {
-    if (!outlineOpen) {
-      const scroller = hostRef.current?.querySelector<HTMLElement>(SCROLLER);
-      if (scroller && parseFloat(getComputedStyle(scroller).paddingLeft) > 0) {
-        scroller.style.paddingLeft = "0px";
-      }
-    }
-
     const editor = editorRef.current;
     if (!editor || editor.getZoomMode().type !== "fit") return;
     // Pinning the scale first makes the engine measure the latest available width.
@@ -171,10 +159,6 @@ export default function DocxEditorSurface({
   useEffect(() => () => {
     if (fitTimerRef.current !== null) window.clearTimeout(fitTimerRef.current);
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(OUTLINE_KEY, outlineOpen ? "open" : "closed");
-  }, [outlineOpen]);
 
   // Opening or closing the pane changes the width the page is fitted to, but the
   // engine only re-fits on a viewport resize. Once the pane's slide settles,
@@ -331,7 +315,10 @@ export default function DocxEditorSurface({
               <FindReplacePanel active={outlineTab === "find"} open={outlineOpen} />
               <DocxEditor.Navigation.GoTo />
             </DocxEditor.Navigation>
-            <DocxEditor.Viewport style={{ flex: 1, minHeight: 0 }}>
+            <DocxEditor.Viewport
+              className={outlineOpen ? undefined : "oo-docx-viewport--no-outline"}
+              style={{ flex: 1, minHeight: 0 }}
+            >
               <DocxEditor.Content />
               <DocxEditor.HyperLink />
               <DocxEditor.ContextMenu />

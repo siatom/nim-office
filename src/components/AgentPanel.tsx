@@ -44,7 +44,7 @@ export function AgentPanel({ open, document, config, onClose, onSettings }: {
     finally { setBusy(false); }
   };
 
-  return <aside className="absolute top-8 bottom-[30px] right-0 z-30 flex w-[min(390px,calc(100vw-56px))] flex-col border-l border-line bg-surface shadow-card">
+  return <aside className="flex h-full w-[min(360px,38vw)] shrink-0 flex-col border-r border-line bg-surface shadow-card">
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-4">
       <span className="grid size-7 place-items-center rounded-lg bg-accent-soft text-accent"><Bot size={16} /></span>
       <div className="min-w-0 flex-1"><div className="text-[13px] font-semibold">文档智能体</div><div className="truncate text-[10px] text-ink-muted">{config.model || "未配置模型"}</div></div>

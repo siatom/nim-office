@@ -246,13 +246,24 @@
   width: 30px;
   min-width: 30px;
   padding: 0;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   order: 10;
+}
+
+.docx-editor .oo-toolbar .oo-paragraph-marks-button:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.docx-editor .oo-toolbar .oo-paragraph-marks-button[data-active],
+.docx-editor .oo-toolbar .oo-paragraph-marks-button[data-active]:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .docx-editor .oo-breaks-menu-anchor {

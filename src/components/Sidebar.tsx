@@ -3,16 +3,16 @@ import {
   FileText,
   FileType2,
   FolderOpen,
-  Moon,
   Presentation,
   Save,
-  Sun,
   Table2,
   X,
 } from "lucide-react";
 import clsx from "clsx";
 import type { RecentEntry } from "../lib/ipc";
+import type { ThemeMode } from "../hooks/useTheme";
 import { KIND_COLOR } from "../lib/format";
+import { AppearanceMenu } from "./AppearanceMenu";
 
 const ICONS = {
   docx: FileText,
@@ -69,23 +69,27 @@ function ActionButton({
 export function Sidebar({
   recent,
   hasActive,
-  isDark,
+  mode,
+  accent,
   onNew,
   onOpen,
   onSave,
   onOpenRecent,
   onRemoveRecent,
-  onToggleTheme,
+  onModeChange,
+  onAccentChange,
 }: {
   recent: RecentEntry[];
   hasActive: boolean;
-  isDark: boolean;
+  mode: ThemeMode;
+  accent: string;
   onNew: () => void;
   onOpen: () => void;
   onSave: () => void;
   onOpenRecent: (entry: RecentEntry) => void;
   onRemoveRecent: (entry: RecentEntry) => void;
-  onToggleTheme: () => void;
+  onModeChange: (mode: ThemeMode) => void;
+  onAccentChange: (color: string) => void;
 }) {
   return (
     <aside className="flex w-[212px] shrink-0 flex-col border-r border-line bg-surface-muted">
@@ -145,14 +149,12 @@ export function Sidebar({
       </div>
 
       <div className="border-t border-line p-2">
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-        >
-          {isDark ? <Sun size={14} /> : <Moon size={14} />}
-          <span className="text-[12.5px] font-medium">{isDark ? "浅色模式" : "深色模式"}</span>
-        </button>
+        <AppearanceMenu
+          mode={mode}
+          onModeChange={onModeChange}
+          accent={accent}
+          onAccentChange={onAccentChange}
+        />
       </div>
     </aside>
   );

@@ -7,9 +7,11 @@ const light = buildTheme({
   radius: "6px",
   font: '"Inter", -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
   colors: {
-    action: "#4f46e5",
-    actionHover: "#4338ca",
-    actionText: "#ffffff",
+    // SuperDoc's chrome follows the app's accent tokens, so a new accent
+    // repaints its toolbar without rebuilding or reinjecting this theme.
+    action: "var(--accent)",
+    actionHover: "var(--accent-hover)",
+    actionText: "var(--accent-text)",
     bg: "#ffffff",
     hoverBg: "#f4f4f5",
     activeBg: "#e4e4e7",
@@ -26,9 +28,9 @@ const dark = buildTheme({
   radius: "6px",
   font: '"Inter", -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
   colors: {
-    action: "#818cf8",
-    actionHover: "#a5b4fc",
-    actionText: "#1e1b4b",
+    action: "var(--accent)",
+    actionHover: "var(--accent-hover)",
+    actionText: "var(--accent-text)",
     bg: "#18181b",
     hoverBg: "#27272a",
     activeBg: "#3f3f46",

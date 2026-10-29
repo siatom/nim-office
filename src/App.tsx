@@ -13,6 +13,7 @@ import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
 import { DocxView, type DocxEditorHandle } from "./features/docx/DocxView";
 import { useTheme } from "./hooks/useTheme";
+import { useAccent } from "./hooks/useAccent";
 import { applySuperdocTheme } from "./lib/superdoc-theme";
 import { base64ToBytes } from "./lib/base64";
 import {
@@ -46,7 +47,8 @@ function errorMessage(error: unknown): string {
 }
 
 export default function App() {
-  const { isDark, toggle: toggleTheme } = useTheme();
+  const { mode, isDark, setMode } = useTheme();
+  const { color: accent, select: selectAccent } = useAccent();
 
   const [tabs, setTabs] = useState<DocTab[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -398,7 +400,8 @@ export default function App() {
         <Sidebar
           recent={recent}
           hasActive={activeTab !== null}
-          isDark={isDark}
+          mode={mode}
+          accent={accent}
           onNew={handleNew}
           onOpen={handleOpen}
           onSave={() => {
@@ -412,7 +415,8 @@ export default function App() {
               pushToast("error", errorMessage(error));
             }
           }}
-          onToggleTheme={toggleTheme}
+          onModeChange={setMode}
+          onAccentChange={selectAccent}
         />
 
         <main className="flex min-w-0 flex-1 flex-col">

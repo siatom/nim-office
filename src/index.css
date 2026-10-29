@@ -12,10 +12,13 @@
   --text: #18181b;
   --text-muted: #71717a;
   --text-subtle: #a1a1aa;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-soft: #eef2ff;
-  --accent-text: #ffffff;
+  /* Overridden at runtime by useAccent(); every accent surface derives from it. */
+  --accent-base: #4f46e5;
+  --accent-ink: #ffffff;
+  --accent: var(--accent-base);
+  --accent-hover: color-mix(in oklab, var(--accent-base) 84%, #000000);
+  --accent-soft: color-mix(in oklab, var(--accent-base) 9%, #ffffff);
+  --accent-text: var(--accent-ink);
   --danger: #dc2626;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.1), 0 1px 3px rgb(0 0 0 / 0.04);
@@ -32,10 +35,12 @@
   --text: #f4f4f5;
   --text-muted: #a1a1aa;
   --text-subtle: #8b8b96;
-  --accent: #818cf8;
-  --accent-hover: #a5b4fc;
-  --accent-soft: #1e1b4b;
-  --accent-text: #1e1b4b;
+  /* On a dark surface the accent is lifted toward white and the ink flips dark,
+     so a mid-tone hue still reads as a highlight rather than a smudge. */
+  --accent: color-mix(in oklab, var(--accent-base) 72%, #ffffff);
+  --accent-hover: color-mix(in oklab, var(--accent-base) 58%, #ffffff);
+  --accent-soft: color-mix(in oklab, var(--accent-base) 24%, #18181b);
+  --accent-text: color-mix(in oklab, var(--accent-base) 20%, #000000);
   --danger: #f87171;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);

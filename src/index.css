@@ -255,6 +255,55 @@
   order: 10;
 }
 
+.docx-editor .oo-breaks-menu-anchor {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.docx-editor .oo-toolbar .oo-breaks-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 42px;
+}
+
+.oo-breaks-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 252px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  box-shadow: 0 12px 32px rgb(15 23 42 / 16%);
+}
+
+.oo-breaks-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 9px 10px;
+  color: var(--text-muted);
+  text-align: left;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.oo-breaks-menu button:hover {
+  background: var(--surface-muted);
+  color: var(--accent);
+}
+
+.oo-breaks-menu button span { display: grid; gap: 2px; }
+.oo-breaks-menu button b { color: var(--text); font-size: 12px; font-weight: 600; }
+.oo-breaks-menu button small { color: var(--text-subtle); font-size: 10px; }
+
 .docx-editor .oo-toolbar .oo-text-order-1 { order: 1; }
 .docx-editor .oo-toolbar .oo-text-order-2 { order: 2; }
 .docx-editor .oo-toolbar .oo-text-order-3 { order: 3; }

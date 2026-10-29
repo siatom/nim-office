@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useEditorValueCommand } from "@docx-editor.dev/react";
 
 const CHINESE_FONT_SIZES = [
@@ -19,13 +20,25 @@ const CHINESE_FONT_SIZES = [
   ["八号", 5],
 ] as const;
 
+const ARABIC_FONT_SIZES = [
+  5, 5.5, 6, 6.5, 7, 7.5, 8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
+];
+
+function optionIdFor(halfPoints: number | null): string {
+  if (halfPoints == null) return "";
+  const chineseSize = CHINESE_FONT_SIZES.find(([, points]) => points * 2 === halfPoints);
+  return chineseSize ? `cn-${halfPoints}` : `pt-${halfPoints}`;
+}
+
 /** WPS-style Chinese size names alongside the editor's point-size options. */
 export function FontSizePicker() {
   const fontSize = useEditorValueCommand("font.size");
-  const currentValue = fontSize.value == null ? "" : String(fontSize.value);
-  const chineseValues = new Set(CHINESE_FONT_SIZES.map(([, points]) => points * 2));
-  const numericValues = new Set(fontSize.options.filter((value) => !chineseValues.has(value)));
-  if (fontSize.value != null && !chineseValues.has(fontSize.value)) numericValues.add(fontSize.value);
+  const [selectedOption, setSelectedOption] = useState(() => optionIdFor(fontSize.value));
+  useEffect(() => setSelectedOption(optionIdFor(fontSize.value)), [fontSize.value]);
+
+  const numericValues = new Set<number>(fontSize.options);
+  ARABIC_FONT_SIZES.forEach((points) => numericValues.add(points * 2));
+  if (fontSize.value != null) numericValues.add(fontSize.value);
   const numericValuesAscending = [...numericValues].sort((a, b) => a - b);
 
   return (
@@ -33,14 +46,19 @@ export function FontSizePicker() {
       aria-label="字号"
       className="h-8 w-[88px] rounded-md border border-[var(--doc-border)] bg-[var(--doc-bg-input)] px-2 text-[12px] text-[var(--doc-text)] outline-none focus:border-[var(--doc-primary)]"
       disabled={!fontSize.isEnabled}
-      onChange={(event) => fontSize.execute(Number(event.currentTarget.value))}
-      value={currentValue}
+      onChange={(event) => {
+        const optionId = event.currentTarget.value;
+        const halfPoints = Number(optionId.slice(optionId.indexOf("-") + 1));
+        setSelectedOption(optionId);
+        fontSize.execute(halfPoints);
+      }}
+      value={selectedOption}
     >
       {fontSize.value == null && <option value="">字号</option>}
       {CHINESE_FONT_SIZES.map(([name, points]) => {
         const halfPoints = points * 2;
         return (
-          <option key={`cn-${halfPoints}`} value={halfPoints}>
+          <option key={`cn-${halfPoints}`} value={`cn-${halfPoints}`}>
             {name}
           </option>
         );
@@ -48,7 +66,7 @@ export function FontSizePicker() {
       {numericValuesAscending.map((halfPoints) => {
         const points = halfPoints / 2;
         return (
-          <option key={`pt-${halfPoints}`} value={halfPoints}>
+          <option key={`pt-${halfPoints}`} value={`pt-${halfPoints}`}>
             {String(points)}
           </option>
         );

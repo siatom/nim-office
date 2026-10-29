@@ -12,14 +12,37 @@ const FIELDS = [
 type MarginKey = (typeof FIELDS)[number][0];
 type ApplyScope = "section" | "document";
 
+/** Portrait dimensions in twips; the dialog swaps them for a landscape page. */
+const PAPER_SIZES = [
+  ["A4", 11906, 16838],
+  ["A3", 16838, 23811],
+  ["B5", 9979, 14175],
+  ["Letter", 12240, 15840],
+] as const;
+type PaperName = (typeof PAPER_SIZES)[number][0];
+
+/** A document may carry any size; only an exact-enough match lights a preset. */
+function matchPaper(widthTwips: number, heightTwips: number): PaperName | null {
+  const short = Math.min(widthTwips, heightTwips);
+  const long = Math.max(widthTwips, heightTwips);
+  const found = PAPER_SIZES.find(
+    ([, width, height]) =>
+      Math.abs(Math.min(width, height) - short) <= 30 &&
+      Math.abs(Math.max(width, height) - long) <= 30,
+  );
+  return found ? found[0] : null;
+}
+
 export default function PageMarginsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { pageSetup, isEnabled, apply } = usePageSetup();
   const [values, setValues] = useState<Record<MarginKey, string>>({ marginTopTwips: "", marginBottomTwips: "", marginLeftTwips: "", marginRightTwips: "" });
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [paper, setPaper] = useState<PaperName | null>(null);
   const [scope, setScope] = useState<ApplyScope>("section");
   useEffect(() => {
     if (!open || !pageSetup) return;
     setOrientation(pageSetup.orientation);
+    setPaper(matchPaper(pageSetup.pageWidthTwips, pageSetup.pageHeightTwips));
     setValues({
       marginTopTwips: (pageSetup.marginsTwips.top / TWIPS_PER_CM).toFixed(2),
       marginBottomTwips: (pageSetup.marginsTwips.bottom / TWIPS_PER_CM).toFixed(2),
@@ -37,16 +60,27 @@ export default function PageMarginsDialog({ open, onClose }: { open: boolean; on
   const submit = () => {
     const update = Object.fromEntries(FIELDS.map(([key]) => [key, Math.round(Number(values[key]) * TWIPS_PER_CM)]));
     if (Object.values(update).some((value) => !Number.isFinite(value) || value < 0)) return;
-    if (apply({ ...update, orientation, scope })) onClose();
+    // The engine only swaps width and height when `orientation` arrives alone,
+    // so a picked paper size has to carry the sides already turned.
+    const size = PAPER_SIZES.find(([name]) => name === paper);
+    const pageSize = size
+      ? orientation === "landscape"
+        ? { pageWidthTwips: size[2], pageHeightTwips: size[1] }
+        : { pageWidthTwips: size[1], pageHeightTwips: size[2] }
+      : {};
+    if (apply({ ...update, orientation, scope, ...pageSize })) onClose();
   };
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-black/30 p-5 backdrop-blur-[2px]" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section aria-modal="true" aria-labelledby="page-margins-title" role="dialog" className="w-full max-w-[440px] overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-[0_24px_80px_-20px_rgba(15,23,42,.35)]">
         <header className="flex items-start justify-between border-b border-border px-6 py-5">
-          <div><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-accent">页面布局</p><h2 id="page-margins-title" className="mt-1 text-lg font-semibold text-text">页边距</h2><p className="mt-1 text-xs text-text-muted">设置正文与纸张边缘之间的距离</p></div>
+          <div><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-accent">页面布局</p><h2 id="page-margins-title" className="mt-1 text-lg font-semibold text-text">页面设置</h2><p className="mt-1 text-xs text-text-muted">纸张、方向与页边距</p></div>
           <button aria-label="关闭" className="rounded-lg p-2 text-text-muted transition hover:bg-surface-muted hover:text-text" onClick={onClose}><X size={17} /></button>
         </header>
         <div className="space-y-5 p-6">
+          <div><p className="mb-2.5 text-xs font-medium text-text-muted">纸张大小</p><div className="grid grid-cols-4 gap-2">
+            {PAPER_SIZES.map(([name]) => <button key={name} aria-pressed={paper === name} className={`rounded-lg border px-2 py-2 text-xs font-medium transition ${paper === name ? "border-accent/50 bg-accent/5 text-accent" : "border-border bg-surface text-text-muted hover:border-border-strong"}`} onClick={() => setPaper(name)}>{name}</button>)}
+          </div></div>
           <div><p className="mb-2.5 text-xs font-medium text-text-muted">纸张方向</p><div className="grid grid-cols-2 gap-2 rounded-xl bg-surface-muted p-1">
             {([["portrait", "纵向"], ["landscape", "横向"]] as const).map(([value, label]) => <button key={value} aria-pressed={orientation === value} className={`rounded-lg px-3 py-2.5 text-sm font-medium transition ${orientation === value ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text"}`} onClick={() => setOrientation(value)}><span className={`mx-auto mb-1 block rounded-[2px] border border-current ${value === "portrait" ? "h-5 w-3.5" : "h-3.5 w-5"}`} />{label}</button>)}
           </div></div>

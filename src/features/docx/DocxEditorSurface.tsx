@@ -497,6 +497,18 @@ export default function DocxEditorSurface({
               <DocxEditor.Toolbar.Superscript className="oo-text-order-5" />
               <DocxEditor.Toolbar.Subscript className="oo-text-order-6" />
             </DocxEditor.Toolbar.Group>
+            {/* The packaged Insert group is contextual, so the preset bar never
+                renders it and none of its controls have an entry. Compose the
+                four a Chinese office document reaches for; the text box,
+                watermark, bookmark, endnote and page-number variants stay out
+                because they only ever lived in the engine's menu bar, which
+                this shell does not render. */}
+            <DocxEditor.Toolbar.Group id="oo-insert" label="插入" priority={65}>
+              <DocxEditor.Toolbar.ImageInsert />
+              <DocxEditor.Toolbar.TableInsert />
+              <DocxEditor.Toolbar.Button slotId="insert.footnote" />
+              <DocxEditor.Toolbar.Button slotId="insert.toc" />
+            </DocxEditor.Toolbar.Group>
             <DocxEditor.Toolbar.Action
               label="页边距"
               icon={<Ruler size={18} strokeWidth={1.8} />}

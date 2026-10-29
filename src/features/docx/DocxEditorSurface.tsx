@@ -13,7 +13,7 @@ import {
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { ListTree, Loader2, Ruler, Scissors, Settings2 } from "lucide-react";
+import { ListTree, Loader2, Pilcrow, Ruler, Scissors, Settings2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
@@ -209,6 +209,10 @@ export default function DocxEditorSurface({
   const getZoomMode = useCallback(() => zoomModeRef.current, []);
   const executeInsert = useCallback((slot: "insert.pageBreak" | "insert.sectionBreakNextPage" | "insert.sectionBreakContinuous") => {
     const command = commandForSlot(slot);
+    if (command) editorRef.current?.exec(command);
+  }, []);
+  const toggleParagraphMarks = useCallback(() => {
+    const command = commandForSlot("review.paragraphMarks");
     if (command) editorRef.current?.exec(command);
   }, []);
 
@@ -457,8 +461,11 @@ export default function DocxEditorSurface({
             <DocxEditor.Toolbar.FontColor className="oo-text-order-7" />
             <DocxEditor.Toolbar.Highlight className="oo-text-order-8" />
             <DocxEditor.Toolbar.Link className="oo-text-order-9" />
-            {/* Word-style formatting marks, including paragraph marks and tabs. */}
-            <DocxEditor.Toolbar.Slot slotId="review.paragraphMarks" />
+            <DocxEditor.Toolbar.Action
+              label="显示段落标记"
+              icon={<Pilcrow size={18} strokeWidth={1.8} />}
+              onSelect={toggleParagraphMarks}
+            />
             <DocxEditor.Toolbar.Group id="text">
               <DocxEditor.Toolbar.Superscript className="oo-text-order-5" />
               <DocxEditor.Toolbar.Subscript className="oo-text-order-6" />

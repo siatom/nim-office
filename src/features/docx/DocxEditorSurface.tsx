@@ -200,6 +200,7 @@ export default function DocxEditorSurface({
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [styleManagerOpen, setStyleManagerOpen] = useState(false);
   const [breakMenuOpen, setBreakMenuOpen] = useState(false);
+  const breaksAnchorRef = useRef<HTMLDivElement>(null);
   const [pageMarginsOpen, setPageMarginsOpen] = useState(false);
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
@@ -481,7 +482,19 @@ export default function DocxEditorSurface({
               onSelect={() => setPageMarginsOpen(true)}
             />
             <DocxEditor.Toolbar.Group id="document-breaks" label="分隔符" priority={15}>
-              <div className="oo-breaks-menu-anchor">
+              <div
+                ref={breaksAnchorRef}
+                className="oo-breaks-menu-anchor"
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setBreakMenuOpen(false);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setBreakMenuOpen(false);
+                    (event.target as HTMLElement).blur();
+                  }
+                }}
+              >
                 <button type="button" className="docx-toolbar__button oo-breaks-trigger" aria-label="插入分隔符" aria-expanded={breakMenuOpen} title="插入分隔符" onClick={() => setBreakMenuOpen((open) => !open)}>
                   <Rows3 size={17} strokeWidth={1.8} /><ChevronDown size={12} strokeWidth={2} />
                 </button>

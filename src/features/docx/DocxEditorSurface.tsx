@@ -132,6 +132,33 @@ function OpenFailureWatcher({ onFailure }: { onFailure: (message: string) => voi
   return null;
 }
 
+/**
+ * The registry glyph for `insert.footnote` is a raised digit, which reads as
+ * superscript beside the script buttons in the same bar. A page with a note
+ * rule under it says "footnote" on its own.
+ */
+function FootnoteIcon() {
+  return (
+    <svg
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="2.5" width="16" height="19" rx="2" />
+      <path d="M8 7h8" />
+      <path d="M8 10h6" />
+      <path d="M6 14.5h12" />
+      <path d="M8 18h4" />
+    </svg>
+  );
+}
+
 /** Adds subtle page-corner marks to every rendered sheet. */
 function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | null } }) {
   useEffect(() => {
@@ -582,7 +609,7 @@ export default function DocxEditorSurface({
             <DocxEditor.Toolbar.Group id="oo-insert" label="插入" priority={65}>
               <DocxEditor.Toolbar.ImageInsert />
               <DocxEditor.Toolbar.TableInsert />
-              <DocxEditor.Toolbar.Button slotId="insert.footnote" />
+              <DocxEditor.Toolbar.Button slotId="insert.footnote" icon={<FootnoteIcon />} />
               <DocxEditor.Toolbar.Button slotId="insert.toc" />
             </DocxEditor.Toolbar.Group>
             <DocxEditor.Toolbar.Action

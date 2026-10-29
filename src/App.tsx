@@ -410,6 +410,13 @@ export default function App() {
           if (id) requestClose(id);
           break;
         case "Equal":
+          event.preventDefault();
+          if (id) {
+            handles.current
+              .get(id)
+              ?.formatScript(event.shiftKey ? "superscript" : "subscript");
+          }
+          break;
         case "NumpadAdd":
           event.preventDefault();
           zoomBy(1);

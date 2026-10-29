@@ -321,6 +321,8 @@ export default function DocxEditorSurface({
             {/* No Pro review module is installed, so the comment/tracked-change
                 group would only render a disabled control. */}
             <DocxEditor.Toolbar.Group id="review" hidden />
+            {/* Keep scripts in the text-formatting group beside strikethrough. */}
+            <DocxEditor.Toolbar.Group id="script" hidden />
             {/* Zoom lives in the status bar, next to the other document
                 readouts, so the packaged group would duplicate it. */}
             <DocxEditor.Toolbar.Group id="zoom" hidden />
@@ -338,6 +340,17 @@ export default function DocxEditorSurface({
             <DocxEditor.Toolbar.StylePicker>
               <ParagraphStylePickerContent />
             </DocxEditor.Toolbar.StylePicker>
+            <DocxEditor.Toolbar.Bold className="oo-text-order-1" />
+            <DocxEditor.Toolbar.Italic className="oo-text-order-2" />
+            <DocxEditor.Toolbar.Underline className="oo-text-order-3" />
+            <DocxEditor.Toolbar.Strike className="oo-text-order-4" />
+            <DocxEditor.Toolbar.FontColor className="oo-text-order-7" />
+            <DocxEditor.Toolbar.Highlight className="oo-text-order-8" />
+            <DocxEditor.Toolbar.Link className="oo-text-order-9" />
+            <DocxEditor.Toolbar.Group id="text">
+              <DocxEditor.Toolbar.Superscript className="oo-text-order-5" />
+              <DocxEditor.Toolbar.Subscript className="oo-text-order-6" />
+            </DocxEditor.Toolbar.Group>
             <DocxEditor.Toolbar.Action
               label="管理段落样式"
               icon={<Settings2 size={18} strokeWidth={1.8} />}

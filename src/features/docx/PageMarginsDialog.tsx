@@ -10,12 +10,16 @@ const FIELDS = [
   ["marginRightTwips", "右边距"],
 ] as const;
 type MarginKey = (typeof FIELDS)[number][0];
+type ApplyScope = "section" | "document";
 
 export default function PageMarginsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { pageSetup, isEnabled, apply } = usePageSetup();
   const [values, setValues] = useState<Record<MarginKey, string>>({ marginTopTwips: "", marginBottomTwips: "", marginLeftTwips: "", marginRightTwips: "" });
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [scope, setScope] = useState<ApplyScope>("section");
   useEffect(() => {
     if (!open || !pageSetup) return;
+    setOrientation(pageSetup.orientation);
     setValues({
       marginTopTwips: (pageSetup.marginsTwips.top / TWIPS_PER_CM).toFixed(2),
       marginBottomTwips: (pageSetup.marginsTwips.bottom / TWIPS_PER_CM).toFixed(2),
@@ -33,7 +37,7 @@ export default function PageMarginsDialog({ open, onClose }: { open: boolean; on
   const submit = () => {
     const update = Object.fromEntries(FIELDS.map(([key]) => [key, Math.round(Number(values[key]) * TWIPS_PER_CM)]));
     if (Object.values(update).some((value) => !Number.isFinite(value) || value < 0)) return;
-    if (apply(update)) onClose();
+    if (apply({ ...update, orientation, scope })) onClose();
   };
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-black/30 p-5 backdrop-blur-[2px]" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -42,10 +46,18 @@ export default function PageMarginsDialog({ open, onClose }: { open: boolean; on
           <div><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-accent">页面布局</p><h2 id="page-margins-title" className="mt-1 text-lg font-semibold text-text">页边距</h2><p className="mt-1 text-xs text-text-muted">设置正文与纸张边缘之间的距离</p></div>
           <button aria-label="关闭" className="rounded-lg p-2 text-text-muted transition hover:bg-surface-muted hover:text-text" onClick={onClose}><X size={17} /></button>
         </header>
-        <div className="grid grid-cols-2 gap-3 p-6">
+        <div className="space-y-5 p-6">
+          <div><p className="mb-2.5 text-xs font-medium text-text-muted">纸张方向</p><div className="grid grid-cols-2 gap-2 rounded-xl bg-surface-muted p-1">
+            {([["portrait", "纵向"], ["landscape", "横向"]] as const).map(([value, label]) => <button key={value} aria-pressed={orientation === value} className={`rounded-lg px-3 py-2.5 text-sm font-medium transition ${orientation === value ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text"}`} onClick={() => setOrientation(value)}><span className={`mx-auto mb-1 block rounded-[2px] border border-current ${value === "portrait" ? "h-5 w-3.5" : "h-3.5 w-5"}`} />{label}</button>)}
+          </div></div>
+          <div><p className="mb-2.5 text-xs font-medium text-text-muted">应用范围</p><div className="grid grid-cols-2 gap-2">
+            {([["section", "本节"], ["document", "整个文档"]] as const).map(([value, label]) => <button key={value} aria-pressed={scope === value} className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${scope === value ? "border-accent/50 bg-accent/5 text-accent" : "border-border bg-surface text-text-muted hover:border-border-strong"}`} onClick={() => setScope(value)}>{label}</button>)}
+          </div></div>
+          <div className="grid grid-cols-2 gap-3">
           {FIELDS.map(([key, label]) => <label key={key} className="rounded-xl border border-border bg-surface px-3.5 py-3 transition focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10"><span className="text-xs font-medium text-text-muted">{label}</span><span className="mt-2 flex items-center gap-2"><input aria-label={label} className="w-full bg-transparent text-[15px] font-medium tabular-nums text-text outline-none" type="number" min="0" max="20" step="0.1" value={values[key]} onChange={(event) => setValues((current) => ({ ...current, [key]: event.target.value }))} /><span className="text-xs text-text-subtle">cm</span></span></label>)}
+          </div>
         </div>
-        <footer className="flex items-center justify-between border-t border-border bg-surface-muted/60 px-6 py-4"><span className="text-[11px] text-text-subtle">应用于当前节</span><div className="flex gap-2"><button className="rounded-lg px-4 py-2 text-xs font-medium text-text-muted transition hover:bg-surface hover:text-text" onClick={onClose}>取消</button><button disabled={!isEnabled} className="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-accent-text shadow-sm transition hover:bg-accent-hover disabled:opacity-50" onClick={submit}>应用</button></div></footer>
+        <footer className="flex items-center justify-end gap-2 border-t border-border bg-surface-muted/60 px-6 py-4"><button className="rounded-lg px-4 py-2 text-xs font-medium text-text-muted transition hover:bg-surface hover:text-text" onClick={onClose}>取消</button><button disabled={!isEnabled} className="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-accent-text shadow-sm transition hover:bg-accent-hover disabled:opacity-50" onClick={submit}>应用</button></footer>
       </section>
     </div>
   );

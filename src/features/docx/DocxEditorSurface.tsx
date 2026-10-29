@@ -545,8 +545,6 @@ export default function DocxEditorSurface({
       if (!firstPage || !focusedPage || !horizontalRuler || !verticalRuler) {
         for (const property of [
           "--oo-focused-ruler-horizontal-x",
-          "--oo-focused-ruler-horizontal-y",
-          "--oo-focused-ruler-vertical-x",
           "--oo-focused-ruler-vertical-y",
         ]) host.style.setProperty(property, "0px");
         return;
@@ -556,22 +554,12 @@ export default function DocxEditorSurface({
       const horizontalRect = horizontalRuler.getBoundingClientRect();
       const verticalRect = verticalRuler.getBoundingClientRect();
       const horizontalX = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-horizontal-x")) || 0;
-      const horizontalY = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-horizontal-y")) || 0;
-      const verticalX = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-vertical-x")) || 0;
       const verticalY = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-vertical-y")) || 0;
       const rulerGap = 24;
 
       host.style.setProperty(
         "--oo-focused-ruler-horizontal-x",
         `${horizontalX + focusedRect.left - horizontalRect.left}px`,
-      );
-      host.style.setProperty(
-        "--oo-focused-ruler-horizontal-y",
-        `${horizontalY + focusedRect.top - horizontalRect.height - horizontalRect.top}px`,
-      );
-      host.style.setProperty(
-        "--oo-focused-ruler-vertical-x",
-        `${verticalX + focusedRect.left - rulerGap - verticalRect.left}px`,
       );
       host.style.setProperty(
         "--oo-focused-ruler-vertical-y",

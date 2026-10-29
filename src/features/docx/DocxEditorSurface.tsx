@@ -227,15 +227,24 @@ function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | nul
         const arm = Math.min(22, width / 3, height / 3);
         const mark = marks.querySelector<SVGSVGElement>(".oo-page-corner-mark");
         if (!mark) continue;
-        mark.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        const svgWidth = width + arm * 2;
+        const svgHeight = height + arm * 2;
+        mark.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
         const paths = mark.querySelectorAll("path");
         const corners = [
-          `M 0 ${arm} V 0 H ${arm}`,
-          `M ${width - arm} 0 H ${width} V ${arm}`,
-          `M 0 ${height - arm} V ${height} H ${arm}`,
-          `M ${width - arm} ${height} H ${width} V ${height - arm}`,
+          `M ${arm} 0 V ${arm} H 0`,
+          `M ${width + arm} 0 V ${arm} H ${svgWidth}`,
+          `M ${arm} ${svgHeight} V ${height + arm} H 0`,
+          `M ${width + arm} ${height + arm} V ${svgHeight} H ${svgWidth}`,
         ];
         paths.forEach((path, index) => path.setAttribute("d", corners[index]));
+        Object.assign(mark.style, {
+          position: "absolute",
+          left: `${-arm}px`,
+          top: `${-arm}px`,
+          width: `${svgWidth}px`,
+          height: `${svgHeight}px`,
+        });
         Object.assign(marks.style, {
           inset: "auto",
           left: `${(contentRect.left - pageRect.left) / scaleX}px`,

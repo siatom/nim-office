@@ -702,7 +702,17 @@ export default function DocxEditorSurface({
           zoomModeRef.current = mode;
         },
         fitPage: fitPageToViewport,
-      }),
+      },
+      () => {
+        const host = hostRef.current;
+        if (!host) return { text: "", headings: [], pageCount: 0 };
+        const pages = [...host.querySelectorAll<HTMLElement>(".docx-page")];
+        const text = pages.map((page) => page.innerText.trim()).filter(Boolean).join("\n\n");
+        const headings = [...host.querySelectorAll<HTMLElement>("h1,h2,h3,h4,h5,h6,[data-outline-level]")]
+          .map((node) => node.innerText.trim()).filter(Boolean);
+        return { text, headings: [...new Set(headings)], pageCount: pages.length };
+      },
+      ),
     );
     propsRef.current.onZoomChange(editor.getZoom(), zoomModeRef.current);
   }, [fitPageToViewport, refitPage, scheduleRefit]);

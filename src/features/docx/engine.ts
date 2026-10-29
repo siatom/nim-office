@@ -22,9 +22,16 @@ export interface DocxEngineHandle {
   fitPage: () => void;
   /** Toggle superscript or subscript on the current selection. */
   formatScript: (script: "superscript" | "subscript") => void;
+  /** Read current editor text for read-only assistant context. */
+  getDocumentContext: () => { text: string; headings: string[]; pageCount: number };
+  /** Reserved for a future confirmed editing workflow; unavailable in read-only mode. */
+  applyDocumentPatch?: (request: DocxPatchRequest) => Promise<void>;
 }
 
 export type ZoomDisplayMode = "fixed" | "page-width" | "page";
+
+/** A future, explicit write request; assistant chat intentionally has no writer yet. */
+export interface DocxPatchRequest { operations: Array<{ kind: string; payload: unknown }> }
 
 interface ZoomModeController {
   get: () => ZoomDisplayMode;
@@ -82,6 +89,7 @@ export function stepZoom(editor: Editor, direction: 1 | -1): void {
 export function createDocxEngine(
   editor: Editor,
   zoomMode: ZoomModeController,
+  getDocumentContext: DocxEngineHandle["getDocumentContext"],
 ): DocxEngineHandle {
   const currentPercent = () => Math.round(editor.getZoom() * 100);
 
@@ -111,5 +119,6 @@ export function createDocxEngine(
       const command = commandForSlot(script === "superscript" ? "script.super" : "script.sub");
       if (command) editor.exec(command);
     },
+    getDocumentContext,
   };
 }

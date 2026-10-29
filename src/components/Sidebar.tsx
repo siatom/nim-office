@@ -1,6 +1,7 @@
 import {
   FilePlus2,
   FolderOpen,
+  Bot,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
@@ -106,6 +107,7 @@ export function Sidebar({
   onToggleMode,
   onAccentChange,
   onOpenSettings,
+  onOpenAgent,
 }: {
   collapsed: boolean;
   hasActive: boolean;
@@ -118,6 +120,7 @@ export function Sidebar({
   onToggleMode: () => void;
   onAccentChange: (color: string) => void;
   onOpenSettings: () => void;
+  onOpenAgent: () => void;
 }) {
   const modeLabel = isDark ? "切换到浅色" : "切换到深色";
   const ModeIcon = isDark ? Sun : Moon;
@@ -129,6 +132,7 @@ export function Sidebar({
         <RailButton icon={FilePlus2} label="新建文档" onClick={onNew} primary />
         <RailButton icon={FolderOpen} label="打开文件" onClick={onOpen} />
         <RailButton icon={Save} label="保存" onClick={onSave} disabled={!hasActive} />
+        <RailButton icon={Bot} label="智能体" onClick={onOpenAgent} />
 
         <div className="mt-auto flex flex-col items-center gap-1 border-t border-line pt-2">
           <RailButton
@@ -159,6 +163,7 @@ export function Sidebar({
           onClick={onSave}
           disabled={!hasActive}
         />
+        <ActionButton icon={Bot} label="智能体" onClick={onOpenAgent} />
       </div>
 
       <div className="mt-auto flex items-center justify-between gap-1 border-t border-line pt-2">

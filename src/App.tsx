@@ -12,6 +12,7 @@ import { EmptyState } from "./components/EmptyState";
 import { DropOverlay } from "./components/DropOverlay";
 import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
 import { SettingsDialog } from "./components/SettingsDialog";
+import { AgentPanel, readAgentConfig, type AgentConfig } from "./components/AgentPanel";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
 import { DocxLoadingState, DocxView } from "./features/docx/DocxView";
 import type { DocxEngineHandle, ZoomDisplayMode } from "./features/docx/engine";
@@ -78,6 +79,8 @@ export default function App() {
   >(null);
   const [dragging, setDragging] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [agentConfig, setAgentConfig] = useState<AgentConfig>(readAgentConfig);
   const [autoSave, setAutoSave] = useState(readAutoSavePreference);
   // The welcome page is also reachable while documents stay open, so it needs
   // its own flag rather than being derived from an empty tab list.
@@ -606,7 +609,7 @@ export default function App() {
   }));
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-bg">
+    <div className="relative flex h-full flex-col overflow-hidden bg-bg">
       <TitleBar
         tabs={tabDescriptors}
         activeId={activeId}
@@ -638,6 +641,7 @@ export default function App() {
             onToggleMode={toggleMode}
             onAccentChange={selectAccent}
             onOpenSettings={() => setSettingsOpen(true)}
+            onOpenAgent={() => setAgentOpen(true)}
           />
         </div>
 
@@ -740,6 +744,19 @@ export default function App() {
         autoSave={autoSave}
         onAutoSaveChange={setAutoSave}
         onClose={() => setSettingsOpen(false)}
+        agentConfig={agentConfig}
+        onAgentConfigChange={setAgentConfig}
+      />
+
+      <AgentPanel
+        open={agentOpen}
+        document={activeTab?.kind === "docx" && !showWelcome ? (() => {
+          const context = activeId ? handles.current.get(activeId)?.getDocumentContext() : undefined;
+          return context ? { name: activeTab.name, size: activeTab.size, ...context } : null;
+        })() : null}
+        config={agentConfig}
+        onClose={() => setAgentOpen(false)}
+        onSettings={() => setSettingsOpen(true)}
       />
 
       {dragging && <DropOverlay />}

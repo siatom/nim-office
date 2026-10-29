@@ -4,6 +4,7 @@ import {
   LocaleProvider,
   NAVIGATION_PANE_WIDTH,
   definePopup,
+  useHeaderFooterState,
   useOpenFailure,
   useZoom,
   type Editor,
@@ -13,7 +14,7 @@ import {
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { ChevronDown, FilePlus2, FileText, ListTree, Loader2, Pilcrow, Ruler, Settings2, Rows3 } from "lucide-react";
+import { ChevronDown, FileDigit, FilePlus2, FileText, Hash, ListTree, Loader2, LogOut, PanelBottom, PanelTop, Pilcrow, Ruler, Settings2, Rows3 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
@@ -53,6 +54,9 @@ const THEME_VARS = {
   "--doc-focus-ring": "var(--accent)",
   "--doc-font-ui": "var(--font-sans)",
 } as CSSProperties;
+
+/** Which furniture story the caret is in, or null while it is in the body. */
+type HeaderFooterEditing = "header" | "footer" | null;
 
 /**
  * CJK collections are large (SimSun's TTC is ~17 MB) and the shaping ceiling
@@ -117,6 +121,24 @@ function ZoomWatcher({
   useEffect(() => {
     onChange(zoom, isFit ? "page-width" : getMode());
   }, [zoom, isFit, onChange, getMode]);
+  return null;
+}
+
+/**
+ * The toolbar swaps its header/footer controls on the engine's scope, and the
+ * scope only exists inside `DocxEditor.Root`, so the state comes up through a
+ * watcher the same way zoom does.
+ */
+function HeaderFooterWatcher({
+  onChange,
+}: {
+  onChange: (editing: HeaderFooterEditing) => void;
+}) {
+  const state = useHeaderFooterState();
+  const editing = state?.editing ?? null;
+  useEffect(() => {
+    onChange(editing);
+  }, [editing, onChange]);
   return null;
 }
 
@@ -248,6 +270,7 @@ export default function DocxEditorSurface({
     };
   }, [breakMenuOpen]);
   const [pageMarginsOpen, setPageMarginsOpen] = useState(false);
+  const [headerFooter, setHeaderFooter] = useState<HeaderFooterEditing>(null);
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
@@ -260,6 +283,29 @@ export default function DocxEditorSurface({
   const executeInsert = useCallback((slot: "insert.pageBreak" | "insert.sectionBreakNextPage" | "insert.sectionBreakContinuous") => {
     const command = commandForSlot(slot);
     if (command) editorRef.current?.exec(command);
+  }, []);
+  /**
+   * Opening a header or footer materialises an empty one when the section has
+   * none, which is what double-clicking the band means in Word. Page-number
+   * fields are only accepted inside that scope, so the two live together.
+   */
+  const editHeaderFooter = useCallback((position: "header" | "footer") => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.exec({ type: "editHeaderFooter", position });
+    editor.focus();
+  }, []);
+  const exitHeaderFooter = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.exec({ type: "exitHeaderFooter" });
+    editor.focus();
+  }, []);
+  const insertPageField = useCallback((field: "PAGE" | "PAGE_X_OF_Y") => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.exec({ type: "insertPageField", field });
+    editor.focus();
   }, []);
   const toggleParagraphMarks = useCallback(() => {
     const command = commandForSlot("review.paragraphMarks");
@@ -311,7 +357,7 @@ export default function DocxEditorSurface({
       ".docx-editor-one-surface__viewport",
     );
     const page = host?.querySelector<HTMLElement>(".docx-pages > .docx-page");
-    if (!editor || !viewport || !page || viewport.clientWidth <= 0) return;
+    if (!editor || !host || !viewport || !page || viewport.clientWidth <= 0) return;
 
     const style = window.getComputedStyle(viewport);
     const horizontalPadding =
@@ -612,8 +658,52 @@ export default function DocxEditorSurface({
               <DocxEditor.Toolbar.Button slotId="insert.footnote" icon={<FootnoteIcon />} />
               <DocxEditor.Toolbar.Button slotId="insert.toc" />
             </DocxEditor.Toolbar.Group>
+            {/* Header, footer, and the page-number fields that only exist
+                inside them. The group swaps to the in-scope controls once the
+                caret moves into a furniture story. */}
+            <DocxEditor.Toolbar.Group
+              id="oo-header-footer"
+              label="页眉页脚"
+              priority={55}
+              // Page numbers and the way out must stay reachable while the
+              // caret is inside a header, even in a narrow window.
+              pinned={headerFooter !== null}
+            >
+              {headerFooter ? (
+                <>
+                  <DocxEditor.Toolbar.Action
+                    label="页码"
+                    icon={<Hash size={18} strokeWidth={1.8} />}
+                    onSelect={() => insertPageField("PAGE")}
+                  />
+                  <DocxEditor.Toolbar.Action
+                    label="第 X 页，共 Y 页"
+                    icon={<FileDigit size={18} strokeWidth={1.8} />}
+                    onSelect={() => insertPageField("PAGE_X_OF_Y")}
+                  />
+                  <DocxEditor.Toolbar.Action
+                    label="退出页眉页脚"
+                    icon={<LogOut size={18} strokeWidth={1.8} />}
+                    onSelect={exitHeaderFooter}
+                  />
+                </>
+              ) : (
+                <>
+                  <DocxEditor.Toolbar.Action
+                    label="页眉"
+                    icon={<PanelTop size={18} strokeWidth={1.8} />}
+                    onSelect={() => editHeaderFooter("header")}
+                  />
+                  <DocxEditor.Toolbar.Action
+                    label="页脚"
+                    icon={<PanelBottom size={18} strokeWidth={1.8} />}
+                    onSelect={() => editHeaderFooter("footer")}
+                  />
+                </>
+              )}
+            </DocxEditor.Toolbar.Group>
             <DocxEditor.Toolbar.Action
-              label="页边距"
+              label="页面设置"
               icon={<Ruler size={18} strokeWidth={1.8} />}
               onSelect={() => setPageMarginsOpen(true)}
             />
@@ -686,6 +776,7 @@ export default function DocxEditorSurface({
               style={{ flex: 1, minHeight: 0 }}
             >
               <DocxEditor.Content />
+              <DocxEditor.HeaderFooterChrome />
               <DocxEditor.HyperLink />
               <DocxEditor.ContextMenu />
             </DocxEditor.Viewport>
@@ -695,6 +786,7 @@ export default function DocxEditorSurface({
             onChange={onZoomChange}
             getMode={getZoomMode}
           />
+          <HeaderFooterWatcher onChange={setHeaderFooter} />
           <OpenFailureWatcher onFailure={handleFailure} />
         </DocxEditor.Root>
       </LocaleProvider>

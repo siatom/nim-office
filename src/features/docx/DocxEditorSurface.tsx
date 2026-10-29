@@ -205,11 +205,12 @@ function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | nul
         const marks = page.ownerDocument.createElement("div");
         marks.className = "oo-page-corner-marks";
         marks.setAttribute("aria-hidden", "true");
-        for (const corner of ["top-left", "top-right", "bottom-left", "bottom-right"]) {
-          const mark = page.ownerDocument.createElement("span");
-          mark.className = `oo-page-corner-mark oo-page-corner-mark--${corner}`;
-          marks.append(mark);
+        const mark = page.ownerDocument.createElementNS("http://www.w3.org/2000/svg", "svg");
+        mark.classList.add("oo-page-corner-mark");
+        for (let i = 0; i < 4; i += 1) {
+          mark.append(page.ownerDocument.createElementNS("http://www.w3.org/2000/svg", "path"));
         }
+        marks.append(mark);
         page.append(marks);
       }
       for (const page of host.querySelectorAll<HTMLElement>(".docx-page")) {
@@ -221,12 +222,26 @@ function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | nul
         if (!pageRect.width || !pageRect.height) continue;
         const scaleX = page.offsetWidth ? pageRect.width / page.offsetWidth : 1;
         const scaleY = page.offsetHeight ? pageRect.height / page.offsetHeight : 1;
+        const width = contentRect.width / scaleX;
+        const height = contentRect.height / scaleY;
+        const arm = Math.min(22, width / 3, height / 3);
+        const mark = marks.querySelector<SVGSVGElement>(".oo-page-corner-mark");
+        if (!mark) continue;
+        mark.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        const paths = mark.querySelectorAll("path");
+        const corners = [
+          `M 0 ${arm} V 0 H ${arm}`,
+          `M ${width - arm} 0 H ${width} V ${arm}`,
+          `M 0 ${height - arm} V ${height} H ${arm}`,
+          `M ${width - arm} ${height} H ${width} V ${height - arm}`,
+        ];
+        paths.forEach((path, index) => path.setAttribute("d", corners[index]));
         Object.assign(marks.style, {
           inset: "auto",
           left: `${(contentRect.left - pageRect.left) / scaleX}px`,
           top: `${(contentRect.top - pageRect.top) / scaleY}px`,
-          width: `${contentRect.width / scaleX}px`,
-          height: `${contentRect.height / scaleY}px`,
+          width: `${width}px`,
+          height: `${height}px`,
         });
       }
     };

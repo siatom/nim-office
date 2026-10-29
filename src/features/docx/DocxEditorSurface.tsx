@@ -14,7 +14,7 @@ import {
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { ChevronDown, FileDigit, FilePlus2, FileText, Hash, ListTree, Loader2, LogOut, PanelBottom, PanelTop, Pilcrow, Ruler, Settings2, Rows3 } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, FileDigit, FilePlus2, FileText, Hash, ListTree, Loader2, LogOut, PanelBottom, PanelTop, Pilcrow, Ruler, Settings2, Rows3 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
@@ -224,7 +224,7 @@ function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | nul
         const scaleY = page.offsetHeight ? pageRect.height / page.offsetHeight : 1;
         const width = contentRect.width / scaleX;
         const height = contentRect.height / scaleY;
-        const arm = Math.min(22, width / 3, height / 3);
+        const arm = Math.min(width * 0.034, width / 3, height / 3);
         const mark = marks.querySelector<SVGSVGElement>(".oo-page-corner-mark");
         if (!mark) continue;
         const svgWidth = width + arm * 2;
@@ -289,6 +289,7 @@ export default function DocxEditorSurface({
   const [styleManagerOpen, setStyleManagerOpen] = useState(false);
   const [breakMenuOpen, setBreakMenuOpen] = useState(false);
   const [paragraphMarksVisible, setParagraphMarksVisible] = useState(false);
+  const [rulersVisible, setRulersVisible] = useState(true);
   const breaksAnchorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!breakMenuOpen) return;
@@ -501,6 +502,10 @@ export default function DocxEditorSurface({
     return () => window.clearTimeout(timer);
   }, [outlineOpen, paneWidth, refitPage]);
 
+  useEffect(() => {
+    scheduleRefit();
+  }, [rulersVisible, scheduleRefit]);
+
   // The engine covers the page with the pane when the viewport cannot hold both,
   // so a narrow window gets a narrower pane instead of a half-hidden document.
   useEffect(() => {
@@ -578,6 +583,10 @@ export default function DocxEditorSurface({
       const contentRect = focusedPage.querySelector<HTMLElement>(".docx-page-content")?.getBoundingClientRect();
       const horizontalRect = horizontalRuler.getBoundingClientRect();
       const verticalRect = verticalRuler.getBoundingClientRect();
+      const verticalTicks = verticalRuler.firstElementChild;
+      if (verticalTicks instanceof HTMLElement) {
+        verticalTicks.style.transform = `translateY(${(contentRect?.top ?? focusedRect.top) - focusedRect.top}px)`;
+      }
       const horizontalX = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-horizontal-x")) || 0;
       const verticalY = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-vertical-y")) || 0;
       const rulerGap = 24;
@@ -588,7 +597,7 @@ export default function DocxEditorSurface({
       );
       host.style.setProperty(
         "--oo-focused-ruler-vertical-y",
-        `${verticalY + (contentRect?.top ?? focusedRect.top) - rulerGap - verticalRect.top}px`,
+        `${verticalY + focusedRect.top - rulerGap - verticalRect.top}px`,
       );
     };
     const scheduleSync = () => {
@@ -875,6 +884,12 @@ export default function DocxEditorSurface({
               icon={<Ruler size={18} strokeWidth={1.8} />}
               onSelect={() => setPageMarginsOpen(true)}
             />
+            <DocxEditor.Toolbar.Action
+              label={rulersVisible ? "隐藏标尺" : "显示标尺"}
+              icon={rulersVisible ? <EyeOff size={18} strokeWidth={1.8} /> : <Eye size={18} strokeWidth={1.8} />}
+              active={rulersVisible}
+              onSelect={() => setRulersVisible((visible) => !visible)}
+            />
             <DocxEditor.Toolbar.Group id="document-breaks" label="分隔符" priority={15}>
               <div
                 ref={breaksAnchorRef}
@@ -917,7 +932,11 @@ export default function DocxEditorSurface({
             onDirty={onDirty}
           />
           <PageMarginsDialog open={pageMarginsOpen} onClose={() => setPageMarginsOpen(false)} />
-          <DocxEditor.HorizontalRuler unit="cm" />
+          {rulersVisible && (
+            <div className="oo-horizontal-ruler-track">
+              <DocxEditor.HorizontalRuler unit="cm" />
+            </div>
+          )}
           <PageCornerMarks hostRef={hostRef} />
           <div className="relative flex min-h-0 flex-1">
             {/* Headings, find and go-to over the right gutter. The toolbar action is
@@ -939,11 +958,15 @@ export default function DocxEditorSurface({
                 <DocxEditor.Navigation.GoTo />
               </DocxEditor.Navigation>
             )}
+            {rulersVisible && (
+              <div className="oo-vertical-ruler-rail">
+                <DocxEditor.VerticalRuler unit="cm" />
+              </div>
+            )}
             <DocxEditor.Viewport
               className={outlineOpen ? "oo-docx-viewport--with-outline" : "oo-docx-viewport--no-outline"}
               style={{ flex: 1, minHeight: 0 }}
             >
-              <DocxEditor.VerticalRuler unit="cm" />
               <DocxEditor.Content />
               <DocxEditor.HeaderFooterChrome />
               <DocxEditor.HyperLink />

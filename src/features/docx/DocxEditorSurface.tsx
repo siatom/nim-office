@@ -11,6 +11,7 @@ import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
 import { Loader2 } from "lucide-react";
 
+import FontFamilyPickerContent from "./FontFamilyPicker";
 import { createDocxEngine } from "./engine";
 import { systemFontResolver } from "./system-fonts";
 import type { DocxSurfaceProps } from "./types";
@@ -198,6 +199,14 @@ export default function DocxEditorSurface({
             {/* No Pro review module is installed, so the comment/tracked-change
                 group would only render a disabled control. */}
             <DocxEditor.Toolbar.Group id="review" hidden />
+            {/* The packaged picker has no CJK category; this one groups the
+                Chinese faces under 中文字体 and keeps a search box. */}
+            <DocxEditor.Toolbar.FontFamily>
+              <DocxEditor.Toolbar.FontFamily.Trigger />
+              <DocxEditor.Toolbar.FontFamily.Content>
+                <FontFamilyPickerContent />
+              </DocxEditor.Toolbar.FontFamily.Content>
+            </DocxEditor.Toolbar.FontFamily>
           </DocxEditor.Toolbar>
           <DocxEditor.Viewport style={{ flex: 1, minHeight: 0 }}>
             <DocxEditor.Content />

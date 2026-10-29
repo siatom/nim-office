@@ -575,6 +575,7 @@ export default function DocxEditorSurface({
       }
 
       const focusedRect = focusedPage.getBoundingClientRect();
+      const contentRect = focusedPage.querySelector<HTMLElement>(".docx-page-content")?.getBoundingClientRect();
       const horizontalRect = horizontalRuler.getBoundingClientRect();
       const verticalRect = verticalRuler.getBoundingClientRect();
       const horizontalX = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-horizontal-x")) || 0;
@@ -587,7 +588,7 @@ export default function DocxEditorSurface({
       );
       host.style.setProperty(
         "--oo-focused-ruler-vertical-y",
-        `${verticalY + focusedRect.top - rulerGap - verticalRect.top}px`,
+        `${verticalY + (contentRect?.top ?? focusedRect.top) - rulerGap - verticalRect.top}px`,
       );
     };
     const scheduleSync = () => {

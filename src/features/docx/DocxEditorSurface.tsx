@@ -66,6 +66,7 @@ const SHAPING = { maxFontBytes: 64 * 1024 * 1024 };
  */
 const NARROW_VIEWPORT = 720;
 const NARROW_PANE_WIDTH = 260;
+const MULTI_PAGE_GAP = 24;
 /** Long enough for the pane's slide to finish before the page is re-fitted. */
 const PANE_SETTLE_MS = 240;
 /**
@@ -178,6 +179,7 @@ function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | nul
 export default function DocxEditorSurface({
   bytes,
   colorMode,
+  multiPage,
   onReady,
   onDirty,
   onError,
@@ -223,6 +225,8 @@ export default function DocxEditorSurface({
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
   const zoomModeRef = useRef<ZoomDisplayMode>("page-width");
+  const multiPageRef = useRef(multiPage);
+  multiPageRef.current = multiPage;
   const fitTimerRef = useRef<number | null>(null);
   const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
   const getZoomMode = useCallback(() => zoomModeRef.current, []);
@@ -273,9 +277,49 @@ export default function DocxEditorSurface({
     propsRef.current.onZoomChange(editor.getZoom(), "page");
   }, []);
 
+  const fitMultiPagesToViewport = useCallback(() => {
+    const editor = editorRef.current;
+    const host = hostRef.current;
+    const viewport = host?.querySelector<HTMLElement>(
+      ".docx-editor-one-surface__viewport",
+    );
+    const page = host?.querySelector<HTMLElement>(".docx-pages > .docx-page");
+    if (!editor || !viewport || !page || viewport.clientWidth <= 0) return;
+
+    const style = window.getComputedStyle(viewport);
+    const horizontalPadding =
+      Number.parseFloat(style.paddingLeft) + Number.parseFloat(style.paddingRight);
+    const availableWidth = Math.max(1, viewport.clientWidth - horizontalPadding - 32);
+    const pageWidthAt100 = page.getBoundingClientRect().width / editor.getZoom();
+    if (pageWidthAt100 <= 0) return;
+
+    const pageCount = Math.max(1, host.querySelectorAll(".docx-pages > .docx-page").length);
+    const columns = Math.min(
+      pageCount,
+      Math.max(1, Math.floor((availableWidth + MULTI_PAGE_GAP) / (pageWidthAt100 + MULTI_PAGE_GAP))),
+    );
+    const nextZoom = Math.min(
+      1,
+      Math.max(
+        0.1,
+        (availableWidth - MULTI_PAGE_GAP * (columns - 1)) / (pageWidthAt100 * columns),
+      ),
+    );
+
+    if (editor.getZoomMode().type !== "fixed") editor.setZoomMode({ type: "fixed" });
+    zoomModeRef.current = "fixed";
+    if (Math.abs(editor.getZoom() - nextZoom) < 0.005) return;
+    editor.setZoom(nextZoom);
+    propsRef.current.onZoomChange(editor.getZoom(), "fixed");
+  }, []);
+
   const refitPage = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
+    if (multiPageRef.current) {
+      fitMultiPagesToViewport();
+      return;
+    }
     if (zoomModeRef.current === "page") {
       fitPageToViewport();
       return;
@@ -288,7 +332,7 @@ export default function DocxEditorSurface({
     // The fit lands after a layout pass, which the zoom subscription can miss;
     // report it here so the status bar never sits on a stale 100%.
     propsRef.current.onZoomChange(editor.getZoom(), "page-width");
-  }, [fitPageToViewport]);
+  }, [fitPageToViewport, fitMultiPagesToViewport]);
 
   const scheduleRefit = useCallback(() => {
     if (fitTimerRef.current !== null) window.clearTimeout(fitTimerRef.current);
@@ -328,6 +372,38 @@ export default function DocxEditorSurface({
     observer.observe(host);
     return () => observer.disconnect();
   }, [scheduleRefit]);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    let observedPage: HTMLElement | null = null;
+    const pageObserver = new ResizeObserver(([entry]) => {
+      host.style.setProperty("--oo-multi-page-width", `${entry.contentRect.width}px`);
+    });
+    const syncPage = () => {
+      const page = host.querySelector<HTMLElement>(".docx-pages > .docx-page");
+      if (page === observedPage) return;
+      pageObserver.disconnect();
+      observedPage = page;
+      if (page) pageObserver.observe(page);
+    };
+    const pagesObserver = new MutationObserver(syncPage);
+    pagesObserver.observe(host, { childList: true, subtree: true });
+    syncPage();
+    return () => {
+      pagesObserver.disconnect();
+      pageObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!multiPage) return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.setZoomMode({ type: "fixed" });
+    zoomModeRef.current = "fixed";
+    fitMultiPagesToViewport();
+  }, [multiPage, fitMultiPagesToViewport]);
 
   // Ctrl + wheel is how Word (and every browser) zooms, and the webview would
   // otherwise scale the whole shell — toolbar and status bar included. Intercept
@@ -433,8 +509,8 @@ export default function DocxEditorSurface({
   return (
     <div
       ref={hostRef}
-      className={`docx-editor relative flex h-full min-h-0 flex-col${colorMode === "dark" ? " dark" : ""}`}
-      style={{ ...THEME_VARS, "--oo-outline-shift": `${paneWidth + 48}px` } as CSSProperties}
+      className={`docx-editor relative flex h-full min-h-0 flex-col${colorMode === "dark" ? " dark" : ""}${multiPage ? " docx-editor--multi-page" : ""}`}
+      style={{ ...THEME_VARS, "--oo-outline-shift": `${paneWidth + 48}px`, "--oo-multi-page-width": "800px" } as CSSProperties}
     >
       <LocaleProvider i18n={zhCN}>
         <DocxEditor.Root

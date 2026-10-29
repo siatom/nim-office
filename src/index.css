@@ -362,6 +362,23 @@
   --docx-nav-shift: var(--oo-outline-shift) !important;
 }
 
+.docx-editor--multi-page .docx-pages {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, var(--oo-multi-page-width, 800px));
+  justify-content: center;
+  align-content: start;
+  gap: 24px;
+  width: 100% !important;
+  height: max-content !important;
+  min-height: 100%;
+}
+
+.docx-editor--multi-page .docx-pages > .docx-page {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+}
+
 /* Unit picker inside the Paragraph dialog's measurement rows. It sits where the
    packaged controls put their static unit label, so it reads as a label that
    happens to be editable rather than as a second input. */

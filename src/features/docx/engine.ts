@@ -45,7 +45,7 @@ export const FIT_ZOOM_MODE: ZoomMode = {
   type: "fit",
   fit: "pageWidth",
   minZoom: 0.3,
-  maxZoom: 1,
+  maxZoom: 5,
 };
 
 /** Bounds for the continuous scale that Ctrl + wheel drives. */

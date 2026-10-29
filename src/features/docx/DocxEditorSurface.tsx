@@ -146,12 +146,19 @@ export default function DocxEditorSurface({
   const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
 
   const refitPage = useCallback(() => {
+    if (!outlineOpen) {
+      const scroller = hostRef.current?.querySelector<HTMLElement>(SCROLLER);
+      if (scroller && parseFloat(getComputedStyle(scroller).paddingLeft) > 0) {
+        scroller.style.paddingLeft = "0px";
+      }
+    }
+
     const editor = editorRef.current;
     if (!editor || editor.getZoomMode().type !== "fit") return;
     // Pinning the scale first makes the engine measure the latest available width.
     editor.setZoomMode({ type: "fixed" });
     editor.setZoomMode(FIT_ZOOM_MODE);
-  }, []);
+  }, [outlineOpen]);
 
   const scheduleRefit = useCallback(() => {
     if (fitTimerRef.current !== null) window.clearTimeout(fitTimerRef.current);
@@ -170,16 +177,10 @@ export default function DocxEditorSurface({
   }, [outlineOpen]);
 
   // Opening or closing the pane changes the width the page is fitted to, but the
-  // engine only re-fits on a viewport resize — its reservation is padding, not a
-  // size change. Once the pane's slide settles, drop a leftover reservation and
-  // re-apply the fit, so closing the pane widens and re-centres the page instead
-  // of leaving the narrow one sitting beside an empty strip.
+  // engine only re-fits on a viewport resize. Once the pane's slide settles,
+  // re-apply the fit so the page follows the available space.
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const scroller = hostRef.current?.querySelector<HTMLElement>(SCROLLER);
-      if (!outlineOpen && scroller && parseFloat(getComputedStyle(scroller).paddingLeft) > 0) {
-        scroller.style.paddingLeft = "0px";
-      }
       refitPage();
     }, PANE_SETTLE_MS);
     return () => window.clearTimeout(timer);
@@ -249,12 +250,15 @@ export default function DocxEditorSurface({
     if (readyRef.current) return;
     readyRef.current = true;
     editorRef.current = editor;
+    // If the outline is hidden, remove its reserved gutter before revealing the
+    // document so the first visible frame is centred in the full viewport.
+    refitPage();
     setLoading(false);
     // The editor may report ready before the restored window has its final size.
     scheduleRefit();
     propsRef.current.onReady(createDocxEngine(editor));
     propsRef.current.onZoomChange(editor.getZoom());
-  }, [scheduleRefit]);
+  }, [refitPage, scheduleRefit]);
 
   const handleChange = useCallback((change: DocumentChange) => {
     // The initial mount reports a `load` change; everything after it is a user edit.

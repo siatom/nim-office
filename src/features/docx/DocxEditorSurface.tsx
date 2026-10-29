@@ -469,7 +469,6 @@ export default function DocxEditorSurface({
               onClick={toggleParagraphMarks}
             >
               <Pilcrow size={18} strokeWidth={1.9} />
-              <span>标记</span>
             </button>
             <DocxEditor.Toolbar.Group id="text">
               <DocxEditor.Toolbar.Superscript className="oo-text-order-5" />

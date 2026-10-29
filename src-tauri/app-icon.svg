@@ -1,22 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
-  <defs>
-    <linearGradient id="plate" x1="160" y1="80" x2="880" y2="960" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6366F1" />
-      <stop offset="1" stop-color="#4338CA" />
-    </linearGradient>
-    <linearGradient id="glyph" x1="512" y1="202" x2="512" y2="822" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFFFFF" />
-      <stop offset="1" stop-color="#E4E7FF" />
-    </linearGradient>
-    <mask id="oCut">
-      <rect width="1024" height="1024" fill="#ffffff" />
-      <circle cx="512" cy="498" r="176" fill="#000000" />
-    </mask>
-  </defs>
-
-  <rect width="1024" height="1024" rx="224" fill="url(#plate)" />
-  <rect x="4" y="4" width="1016" height="1016" rx="220" stroke="#ffffff" stroke-opacity="0.10" stroke-width="8" />
-
-  <!-- The O: one ring, gently heavier at the bottom like an inked letterform -->
-  <circle cx="512" cy="512" r="310" fill="url(#glyph)" mask="url(#oCut)" />
+  <rect width="1024" height="1024" rx="224" fill="#2F67E8" />
+  <path
+    d="M360 704V320L664 704V320"
+    stroke="#FFFFFF"
+    stroke-width="104"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

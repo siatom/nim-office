@@ -1,4 +1,4 @@
-/** Mirrors src-tauri/app-icon.svg at UI sizes: a single O ring on the accent plate. */
+/** Mirrors src-tauri/app-icon.svg at UI sizes: a white N on the accent plate. */
 export function Logo({ size = 34 }: { size?: number }) {
   return (
     <svg
@@ -11,10 +11,11 @@ export function Logo({ size = 34 }: { size?: number }) {
     >
       <rect width="32" height="32" rx="7" fill="var(--accent)" />
       <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        fill="#ffffff"
-        d="M16 6.3125A9.6875 9.6875 0 1 0 16 25.6875A9.6875 9.6875 0 1 0 16 6.3125ZM16 10.0625A5.5 5.5 0 1 0 16 21.0625A5.5 5.5 0 1 0 16 10.0625Z"
+        d="M10 23V9L22 23V9"
+        stroke="#ffffff"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

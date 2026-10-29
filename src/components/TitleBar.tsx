@@ -160,7 +160,7 @@ export function TitleBar({
         >
           <Logo size={16} />
           <span className="text-[12px] font-medium tracking-tight text-ink">
-            One Office
+            NimOffice
           </span>
         </button>
       </div>

@@ -1,4 +1,4 @@
-# One Office
+# NimOffice
 
 A cross-platform, lightweight office suite built with Tauri 2.
 
@@ -22,7 +22,7 @@ A frameless window with a custom title bar and a left sidebar instead of a nativ
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│ logo  One Office  <file>              ─  □  ×        │  custom title bar (drag region)
+│ logo  NimOffice  <file>               ─  □  ×        │  custom title bar (drag region)
 ├────────────┬─────────────────────────────────────────┤
 │ New        │  tab · tab · tab                     +  │
 │ Open       ├─────────────────────────────────────────┤
@@ -107,7 +107,7 @@ pnpm tauri build
 
 ### Single instance
 
-One Office runs as a single instance: launching it again brings the existing window to the front
+NimOffice runs as a single instance: launching it again brings the existing window to the front
 and opens any documents passed on the command line. Dev builds (`pnpm tauri dev`) use a
 `.dev`-suffixed bundle identifier, which gives them their own lock and app-data directory, so a
 dev session and an installed build can run side by side. `pnpm tauri build --debug` counts as a

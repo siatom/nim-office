@@ -13,39 +13,40 @@
 
 .oo-page-corner-mark {
   position: absolute;
-  width: 14px;
-  height: 14px;
-  border-color: rgb(113 113 122 / 45%);
+  width: 16px;
+  height: 16px;
+  border-color: rgb(82 96 116 / 72%);
   border-style: solid;
   border-width: 0;
+  filter: drop-shadow(0 0 1px rgb(255 255 255 / 70%));
 }
 
 .oo-page-corner-mark--top-left {
-  top: 8px;
-  left: 8px;
-  border-top-width: 1px;
-  border-left-width: 1px;
+  top: 0;
+  left: 0;
+  border-right-width: 1.5px;
+  border-bottom-width: 1.5px;
 }
 
 .oo-page-corner-mark--top-right {
-  top: 8px;
-  right: 8px;
-  border-top-width: 1px;
-  border-right-width: 1px;
+  top: 0;
+  right: 0;
+  border-left-width: 1.5px;
+  border-bottom-width: 1.5px;
 }
 
 .oo-page-corner-mark--bottom-left {
-  bottom: 8px;
-  left: 8px;
-  border-bottom-width: 1px;
-  border-left-width: 1px;
+  bottom: 0;
+  left: 0;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
 }
 
 .oo-page-corner-mark--bottom-right {
-  right: 8px;
-  bottom: 8px;
-  border-right-width: 1px;
-  border-bottom-width: 1px;
+  right: 0;
+  bottom: 0;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));

@@ -2,6 +2,7 @@ import { DocxEditor, useParagraphStyle } from "@docx-editor.dev/react";
 
 const BUILTIN_STYLE_NAMES: Record<string, string> = {
   normal: "正文",
+  normalweb: "正文(网站)",
   title: "标题",
   subtitle: "副标题",
   nospacing: "无间距",
@@ -26,7 +27,7 @@ const BUILTIN_STYLE_NAMES: Record<string, string> = {
 };
 
 function normalizeStyleName(value: string): string {
-  return value.replace(/[\s_-]/g, "").toLowerCase();
+  return value.replace(/[\s_()\-]/g, "").toLowerCase();
 }
 
 export function getDisplayName(styleId: string, name: string): string {

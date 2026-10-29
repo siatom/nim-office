@@ -461,11 +461,15 @@ export default function DocxEditorSurface({
             <DocxEditor.Toolbar.FontColor className="oo-text-order-7" />
             <DocxEditor.Toolbar.Highlight className="oo-text-order-8" />
             <DocxEditor.Toolbar.Link className="oo-text-order-9" />
-            <DocxEditor.Toolbar.Action
-              label="显示段落标记"
-              icon={<Pilcrow size={18} strokeWidth={1.8} />}
-              onSelect={toggleParagraphMarks}
-            />
+            <button
+              type="button"
+              className="docx-toolbar__button oo-paragraph-marks-button"
+              aria-label="显示段落标记"
+              title="显示段落标记"
+              onClick={toggleParagraphMarks}
+            >
+              <Pilcrow size={18} strokeWidth={1.8} />
+            </button>
             <DocxEditor.Toolbar.Group id="text">
               <DocxEditor.Toolbar.Superscript className="oo-text-order-5" />
               <DocxEditor.Toolbar.Subscript className="oo-text-order-6" />

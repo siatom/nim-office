@@ -7,8 +7,10 @@ use crate::error::AppResult;
 use crate::recent::{self, RecentEntry};
 
 #[tauri::command]
-pub fn read_document(path: String) -> AppResult<DocumentPayload> {
-    document::read_document(&PathBuf::from(path))
+pub async fn read_document(path: String) -> AppResult<DocumentPayload> {
+    tauri::async_runtime::spawn_blocking(move || document::read_document(&PathBuf::from(path)))
+        .await
+        .map_err(|error| crate::error::AppError::Io(format!("读取任务失败：{error}")))?
 }
 
 #[tauri::command]

@@ -142,7 +142,28 @@ export default function DocxEditorSurface({
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
+  const fitTimerRef = useRef<number | null>(null);
   const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
+
+  const refitPage = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor || editor.getZoomMode().type !== "fit") return;
+    // Pinning the scale first makes the engine measure the latest available width.
+    editor.setZoomMode({ type: "fixed" });
+    editor.setZoomMode(FIT_ZOOM_MODE);
+  }, []);
+
+  const scheduleRefit = useCallback(() => {
+    if (fitTimerRef.current !== null) window.clearTimeout(fitTimerRef.current);
+    fitTimerRef.current = window.setTimeout(() => {
+      fitTimerRef.current = null;
+      refitPage();
+    }, PANE_SETTLE_MS);
+  }, [refitPage]);
+
+  useEffect(() => () => {
+    if (fitTimerRef.current !== null) window.clearTimeout(fitTimerRef.current);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(OUTLINE_KEY, outlineOpen ? "open" : "closed");
@@ -159,15 +180,10 @@ export default function DocxEditorSurface({
       if (!outlineOpen && scroller && parseFloat(getComputedStyle(scroller).paddingLeft) > 0) {
         scroller.style.paddingLeft = "0px";
       }
-      const editor = editorRef.current;
-      if (!editor || editor.getZoomMode().type !== "fit") return;
-      // Pinning the scale first is what makes the fit measure the room again: the
-      // same mode back-to-back reports "unchanged" and keeps the stale width.
-      editor.setZoomMode({ type: "fixed" });
-      editor.setZoomMode(FIT_ZOOM_MODE);
+      refitPage();
     }, PANE_SETTLE_MS);
     return () => window.clearTimeout(timer);
-  }, [outlineOpen, paneWidth]);
+  }, [outlineOpen, paneWidth, refitPage]);
 
   // The engine covers the page with the pane when the viewport cannot hold both,
   // so a narrow window gets a narrower pane instead of a half-hidden document.
@@ -178,10 +194,13 @@ export default function DocxEditorSurface({
       setPaneWidth(
         entry.contentRect.width < NARROW_VIEWPORT ? NARROW_PANE_WIDTH : NAVIGATION_PANE_WIDTH,
       );
+      // A restored (non-maximized) window can finish laying out after the editor
+      // mounts. Refit after its dimensions settle so the first page is centred.
+      scheduleRefit();
     });
     observer.observe(host);
     return () => observer.disconnect();
-  }, []);
+  }, [scheduleRefit]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -231,9 +250,11 @@ export default function DocxEditorSurface({
     readyRef.current = true;
     editorRef.current = editor;
     setLoading(false);
+    // The editor may report ready before the restored window has its final size.
+    scheduleRefit();
     propsRef.current.onReady(createDocxEngine(editor));
     propsRef.current.onZoomChange(editor.getZoom());
-  }, []);
+  }, [scheduleRefit]);
 
   const handleChange = useCallback((change: DocumentChange) => {
     // The initial mount reports a `load` change; everything after it is a user edit.

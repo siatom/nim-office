@@ -645,7 +645,17 @@ export default function App() {
           />
         </div>
 
-        <main className="flex min-w-0 flex-1 flex-col">
+        <main className="flex min-w-0 flex-1">
+          <AgentPanel
+            open={agentOpen}
+            document={activeTab?.kind === "docx" && !showWelcome ? (() => {
+              const context = activeId ? handles.current.get(activeId)?.getDocumentContext() : undefined;
+              return context ? { name: activeTab.name, size: activeTab.size, ...context } : null;
+            })() : null}
+            config={agentConfig}
+            onClose={() => setAgentOpen(false)}
+            onSettings={() => setSettingsOpen(true)}
+          />
           <div className="relative min-h-0 flex-1">
             {showWelcome && (
               <EmptyState
@@ -746,17 +756,6 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         agentConfig={agentConfig}
         onAgentConfigChange={setAgentConfig}
-      />
-
-      <AgentPanel
-        open={agentOpen}
-        document={activeTab?.kind === "docx" && !showWelcome ? (() => {
-          const context = activeId ? handles.current.get(activeId)?.getDocumentContext() : undefined;
-          return context ? { name: activeTab.name, size: activeTab.size, ...context } : null;
-        })() : null}
-        config={agentConfig}
-        onClose={() => setAgentOpen(false)}
-        onSettings={() => setSettingsOpen(true)}
       />
 
       {dragging && <DropOverlay />}

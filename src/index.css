@@ -362,6 +362,16 @@
   --docx-nav-shift: var(--oo-outline-shift) !important;
 }
 
+/* Place the editor's structure pane in the right gutter while preserving its
+   internal left-to-right text and controls. */
+.docx-editor .docx-nav {
+  direction: rtl;
+}
+
+.docx-editor .docx-nav__panel-shell {
+  direction: ltr;
+}
+
 /* Keep both rulers quiet and precise, with clearer tick contrast and a soft
    edge that ties them into the editor chrome. */
 .docx-editor :is(.docx-horizontal-ruler, .docx-vertical-ruler) {

@@ -1,4 +1,4 @@
-/** Mirrors src-tauri/app-icon.svg at UI sizes: two stacked sheets with rules. */
+/** Mirrors src-tauri/app-icon.svg at UI sizes: a single O ring on the accent plate. */
 export function Logo({ size = 34 }: { size?: number }) {
   return (
     <svg
@@ -10,15 +10,12 @@ export function Logo({ size = 34 }: { size?: number }) {
       className="shrink-0"
     >
       <rect width="32" height="32" rx="7" fill="var(--accent)" />
-      <g transform="rotate(7 17.5 13.5)">
-        <rect x="11" y="6" width="13" height="15" rx="2.4" fill="#ffffff" opacity="0.36" />
-      </g>
-      <rect x="8" y="9" width="13" height="15" rx="2.4" fill="#ffffff" />
-      <g fill="var(--accent)" opacity="0.42">
-        <rect x="10.4" y="12.2" width="8.2" height="1.6" rx="0.8" />
-        <rect x="10.4" y="15.6" width="8.2" height="1.6" rx="0.8" />
-        <rect x="10.4" y="19" width="5.6" height="1.6" rx="0.8" />
-      </g>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        fill="#ffffff"
+        d="M16 6.3125A9.6875 9.6875 0 1 0 16 25.6875A9.6875 9.6875 0 1 0 16 6.3125ZM16 10.0625A5.5 5.5 0 1 0 16 21.0625A5.5 5.5 0 1 0 16 10.0625Z"
+      />
     </svg>
   );
 }

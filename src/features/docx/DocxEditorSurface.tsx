@@ -457,6 +457,8 @@ export default function DocxEditorSurface({
             <DocxEditor.Toolbar.FontColor className="oo-text-order-7" />
             <DocxEditor.Toolbar.Highlight className="oo-text-order-8" />
             <DocxEditor.Toolbar.Link className="oo-text-order-9" />
+            {/* Word-style formatting marks, including paragraph marks and tabs. */}
+            <DocxEditor.Toolbar.Slot slotId="review.paragraphMarks" />
             <DocxEditor.Toolbar.Group id="text">
               <DocxEditor.Toolbar.Superscript className="oo-text-order-5" />
               <DocxEditor.Toolbar.Subscript className="oo-text-order-6" />

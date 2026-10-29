@@ -143,12 +143,14 @@ export function ParagraphStyleManager({
       const result = writeParagraphStyle(currentBytes, draft, mode === "edit" ? editingStyleId : null);
       editor.load(result.bytes);
 
-      if (mode === "create" && applyAfterCreate && selection && "paraId" in selection.from && "paraId" in selection.to) {
+      if (selection && "paraId" in selection.from && "paraId" in selection.to) {
         const restored = editor.exec({
           type: "setSelection",
           range: { from: selection.from, to: selection.to },
         });
-        if (restored.ok) editor.exec({ type: "setParagraphStyle", styleId: result.styleId });
+        if (mode === "create" && applyAfterCreate && restored.ok) {
+          editor.exec({ type: "setParagraphStyle", styleId: result.styleId });
+        }
       }
 
       onDirty();

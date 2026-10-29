@@ -469,7 +469,7 @@ export default function App() {
           id="app-sidebar"
           className={clsx(
             "relative shrink-0 overflow-hidden border-r border-line bg-surface-muted transition-[width] duration-200 ease-out motion-reduce:transition-none",
-            sidebarOpen ? "w-[212px]" : "w-[52px]",
+            sidebarOpen ? "w-[224px]" : "w-[56px]",
           )}
         >
           <Sidebar

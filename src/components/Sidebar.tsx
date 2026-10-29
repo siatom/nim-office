@@ -1,4 +1,12 @@
-import { FilePlus2, FolderOpen, Moon, Save, Settings, Sun } from "lucide-react";
+import {
+  FilePlus2,
+  FolderOpen,
+  Moon,
+  Save,
+  Settings,
+  Sun,
+  type LucideIcon,
+} from "lucide-react";
 import clsx from "clsx";
 import { AccentMenu } from "./AccentMenu";
 
@@ -10,7 +18,7 @@ function ActionButton({
   disabled,
   primary,
 }: {
-  icon: typeof FilePlus2;
+  icon: LucideIcon;
   label: string;
   hint?: string;
   onClick: () => void;
@@ -23,20 +31,20 @@ function ActionButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-left transition-colors",
+        "group flex min-h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-left transition-[background-color,color,transform] duration-150 active:scale-[0.99]",
         primary
-          ? "bg-accent text-accent-text hover:bg-accent-hover"
+          ? "bg-accent-soft text-accent hover:bg-accent-soft"
           : "text-ink-muted hover:bg-surface hover:text-ink",
-        disabled && "pointer-events-none opacity-40",
+        disabled && "cursor-not-allowed opacity-40",
       )}
     >
-      <Icon size={14} className="shrink-0" />
+      <Icon size={16} strokeWidth={1.8} className="shrink-0" />
       <span className="flex-1 truncate text-[12.5px] font-medium">{label}</span>
       {hint && (
         <span
           className={clsx(
             "text-[10.5px] tabular-nums",
-            primary ? "text-accent-text/60" : "text-ink-subtle opacity-0 group-hover:opacity-100",
+            primary ? "text-accent/65" : "text-ink-subtle opacity-0 group-hover:opacity-100",
           )}
         >
           {hint}
@@ -53,7 +61,7 @@ function RailButton({
   disabled,
   primary,
 }: {
-  icon: typeof FilePlus2;
+  icon: LucideIcon;
   label: string;
   onClick: () => void;
   disabled?: boolean;
@@ -67,14 +75,14 @@ function RailButton({
       aria-label={label}
       title={label}
       className={clsx(
-        "grid size-8 shrink-0 place-items-center rounded-lg transition-colors",
+        "grid size-9 shrink-0 place-items-center rounded-lg transition-[background-color,color,transform] duration-150 active:scale-95",
         primary
-          ? "bg-accent text-accent-text hover:bg-accent-hover"
+          ? "bg-accent-soft text-accent hover:bg-accent-soft"
           : "text-ink-muted hover:bg-surface hover:text-ink",
-        disabled && "pointer-events-none opacity-35",
+        disabled && "cursor-not-allowed opacity-35",
       )}
     >
-      <Icon size={15} strokeWidth={1.8} />
+      <Icon size={16} strokeWidth={1.8} />
     </button>
   );
 }
@@ -112,13 +120,12 @@ export function Sidebar({
 
   if (collapsed) {
     return (
-      <aside className="flex h-full w-[52px] flex-col items-center gap-1 py-2">
+      <aside aria-label="文档操作" className="flex h-full w-[56px] flex-col items-center gap-1 px-2 py-2">
         <RailButton icon={FilePlus2} label="新建文档" onClick={onNew} primary />
         <RailButton icon={FolderOpen} label="打开文件" onClick={onOpen} />
         <RailButton icon={Save} label="保存" onClick={onSave} disabled={!hasActive} />
 
-        <div className="mt-auto flex flex-col items-center gap-1 pt-2">
-          <div className="mb-1 h-px w-7 bg-line" />
+        <div className="mt-auto flex flex-col items-center gap-1 border-t border-line pt-2">
           <RailButton icon={ModeIcon} label={modeLabel} onClick={onToggleMode} />
           <AccentMenu accent={accent} onSelect={onAccentChange} rail />
           <RailButton icon={Settings} label="设置" onClick={onOpenSettings} />
@@ -128,8 +135,11 @@ export function Sidebar({
   }
 
   return (
-    <aside className="flex h-full w-[212px] flex-col">
-      <div className="space-y-0.5 p-2">
+    <aside aria-label="文档操作" className="flex h-full w-[224px] flex-col px-2 py-2">
+      <div className="space-y-1">
+        <p className="px-2.5 pb-1 pt-1 text-[10px] font-semibold tracking-[0.12em] text-ink-subtle">
+          文档
+        </p>
         <ActionButton icon={FilePlus2} label="新建文档" hint="Ctrl N" onClick={onNew} primary />
         <ActionButton icon={FolderOpen} label="打开文件" hint="Ctrl O" onClick={onOpen} />
         <ActionButton
@@ -141,7 +151,7 @@ export function Sidebar({
         />
       </div>
 
-      <div className="mt-auto flex items-center gap-1 border-t border-line p-2">
+      <div className="mt-auto flex items-center justify-between gap-1 border-t border-line pt-2">
         <RailButton icon={ModeIcon} label={modeLabel} onClick={onToggleMode} />
         <AccentMenu accent={accent} onSelect={onAccentChange} />
         <RailButton icon={Settings} label="设置" onClick={onOpenSettings} />

@@ -134,6 +134,52 @@
   background: var(--bg);
 }
 
+/* Give the editor controls the same quiet, tactile surfaces as the host chrome. */
+.docx-editor .oo-toolbar {
+  min-height: 40px;
+  margin: 8px 12px;
+  gap: 3px;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-sans);
+}
+
+.docx-editor .oo-toolbar .docx-toolbar__button {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  color: var(--text-muted);
+}
+
+.docx-editor .oo-toolbar .docx-toolbar__button:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.docx-editor .oo-toolbar .docx-toolbar__button[data-active],
+.docx-editor .oo-toolbar .docx-toolbar__button[data-active]:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.docx-editor .oo-toolbar .docx-toolbar__picker {
+  min-height: 30px;
+  border-radius: 7px;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.docx-editor .oo-toolbar .docx-toolbar__picker:hover:not(:disabled) {
+  background: var(--surface-muted);
+}
+
+.docx-editor .oo-toolbar :is(button, [role="button"]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 /* docx-editor uses --docx-nav-shift to reserve the structure pane. Its own
    state can briefly retain that shift after a document mounts; override the
    variable while the pane is closed so the first page uses the full viewport. */

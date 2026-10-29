@@ -387,6 +387,18 @@ export default function App() {
   // Undecorated windows lose the native menu, so the shortcuts it would have
   // owned are registered here instead.
   useEffect(() => {
+    const onScriptShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.code !== "Equal") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const id = activeIdRef.current;
+      if (id) {
+        handles.current
+          .get(id)
+          ?.formatScript(event.shiftKey ? "superscript" : "subscript");
+      }
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
       const mod = event.ctrlKey || event.metaKey;
       if (!mod) return;
@@ -409,14 +421,6 @@ export default function App() {
           event.preventDefault();
           if (id) requestClose(id);
           break;
-        case "Equal":
-          event.preventDefault();
-          if (id) {
-            handles.current
-              .get(id)
-              ?.formatScript(event.shiftKey ? "superscript" : "subscript");
-          }
-          break;
         case "NumpadAdd":
           event.preventDefault();
           zoomBy(1);
@@ -436,8 +440,12 @@ export default function App() {
       }
     };
 
+    window.addEventListener("keydown", onScriptShortcut, true);
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onScriptShortcut, true);
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [handleNew, handleOpen, requestClose, saveTab, zoomBy, zoomFit]);
 
   // Ctrl + wheel zooms the document (handled by the editor surface). The webview

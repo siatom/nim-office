@@ -45,6 +45,8 @@ const THEME_VARS = {
   "--doc-primary": "var(--accent)",
   "--doc-primary-hover": "var(--accent-hover)",
   "--doc-primary-light": "var(--accent-soft)",
+  "--doc-toggle-active-bg": "var(--accent-soft)",
+  "--doc-toggle-active-fg": "var(--accent)",
   "--doc-on-primary": "var(--accent-text)",
   "--doc-focus-ring": "var(--accent)",
   "--doc-font-ui": "var(--font-sans)",
@@ -315,7 +317,7 @@ export default function DocxEditorSurface({
           onChange={handleChange}
           onFontError={(error) => console.warn("[docx] font error", error)}
         >
-          <DocxEditor.Toolbar onSave={onSave}>
+          <DocxEditor.Toolbar onSave={onSave} className="oo-toolbar">
             {/* No Pro review module is installed, so the comment/tracked-change
                 group would only render a disabled control. */}
             <DocxEditor.Toolbar.Group id="review" hidden />

@@ -111,6 +111,14 @@ arrive when the first document tab mounts. CJK font files are read from the oper
 on demand (SimSun's TTC is ~17 MB), so Word-compatible measurement costs no bundle size; the
 per-face shaping ceiling is raised to 64 MB to admit those collections.
 
+## Fonts
+
+Font bytes always come from the host, so the app ships no font files. Documents that name
+`仿宋_GB2312`, `楷体_GB2312` or `方正小标宋简体` keep those names when saved; if the exact file
+is not installed, the resolver serves the closest installed face (FangSong / KaiTi, and
+华文中宋 for the title face) under the authored name, and HarfBuzz measures with those bytes.
+All three families are offered in the editor's font picker.
+
 ## License
 
 The editor core (`@docx-editor.dev/core`) is Apache-2.0. Commercial modules

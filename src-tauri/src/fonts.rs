@@ -47,16 +47,67 @@ fn database() -> &'static Database {
 /// Family groups that Word documents mix between localized and English names.
 /// Matching normalizes case and strips spaces/punctuation, so "Times New Roman"
 /// and "timesnewroman" are the same request.
+///
+/// Chinese government documents also name the GB2312 cuts (`仿宋_GB2312`,
+/// `楷体_GB2312`) and Founder's `方正小标宋简体` title face. Those files are
+/// not part of a stock Windows or macOS install, so the names sit next to the
+/// modern faces they are interchangeable with: the resolver then serves the
+/// installed cut under the name the document authored, and saving keeps that
+/// name intact.
 const FAMILY_GROUPS: &[&[&str]] = &[
     &["宋体", "simsun", "nsimsun", "songti", "songtisc"],
     &["微软雅黑", "microsoftyahei", "microsoftyaheiui", "msyh"],
     &["黑体", "simhei", "stheiti"],
-    &["楷体", "kaiti", "kaitisc"],
-    &["仿宋", "fangsong"],
+    &[
+        "楷体",
+        "kaiti",
+        "kaitisc",
+        "楷体gb2312",
+        "kaitigb2312",
+        "华文楷体",
+        "stkaiti",
+    ],
+    &[
+        "仿宋",
+        "fangsong",
+        "仿宋gb2312",
+        "fangsonggb2312",
+        "华文仿宋",
+        "stfangsong",
+    ],
     &["等线", "dengxian"],
     &["思源黑体", "sourcehansanssc", "notosanssc", "notosanscjksc"],
-    &["思源宋体", "sourcehanserifsc", "notoserifsc", "notoserifcjksc"],
+    &[
+        "思源宋体",
+        "sourcehanserifsc",
+        "notoserifsc",
+        "notoserifcjksc",
+    ],
     &["苹方", "pingfang", "pingfangsc"],
+    &["华文中宋", "stzhongsong", "zhongsong"],
+    &[
+        "方正小标宋简体",
+        "方正小标宋",
+        "fzxiaobiaosong",
+        "fzxiaobiaosongb05",
+        "fzxiaobiaosongb05s",
+        "fzxbsjw",
+        "fzxbsjwgb10",
+    ],
+];
+
+/// Substitutes tried in order when none of a family's own names is installed.
+/// These are deliberately one-way: a document asking for 宋体 must never land
+/// on the 小标宋 title face, but a title whose own font is missing should keep
+/// a serif voice instead of dropping to the default sans fallback.
+const FAMILY_FALLBACKS: &[(&str, &[&str])] = &[
+    // Founder's title face: the medium-weight 华文中宋 is the closest cut that
+    // ships with Office; 宋体 is the last readable serif resort.
+    ("方正小标宋简体", &["华文中宋", "宋体"]),
+    // FangSong / KaiTi are not system faces on macOS. Songti keeps the page in
+    // the same serif family rather than switching to the sans fallback.
+    ("仿宋", &["宋体"]),
+    ("楷体", &["宋体"]),
 ];
 
 fn normalize(name: &str) -> String {
@@ -66,7 +117,9 @@ fn normalize(name: &str) -> String {
         .collect()
 }
 
-fn candidates(family: &str) -> Vec<String> {
+/// Every name belonging to the family's equivalence group. The requested name
+/// stays first so an exact install always beats its aliases.
+fn with_group(family: &str) -> Vec<String> {
     let wanted = normalize(family);
     let mut names = vec![wanted.clone()];
     for group in FAMILY_GROUPS {
@@ -74,20 +127,59 @@ fn candidates(family: &str) -> Vec<String> {
             names.extend(group.iter().map(|name| normalize(name)));
         }
     }
-    names.sort();
-    names.dedup();
+    names
+}
+
+/// Names to try in priority order: the family and its aliases, then the
+/// one-way fallbacks. Order is significant, so dedupe without sorting.
+fn candidates(family: &str) -> Vec<String> {
+    let mut names = with_group(family);
+    for (source, fallbacks) in FAMILY_FALLBACKS {
+        let source_names = with_group(source);
+        if source_names.iter().any(|name| names.contains(name)) {
+            for fallback in *fallbacks {
+                names.extend(with_group(fallback));
+            }
+        }
+    }
+
+    let mut seen = HashSet::new();
+    names.retain(|name| seen.insert(name.clone()));
     names
 }
 
 fn matching_faces<'a>(db: &'a Database, family: &str) -> Vec<&'a FaceInfo> {
-    let wanted = candidates(family);
-    db.faces()
-        .filter(|face| {
-            face.families
-                .iter()
-                .any(|(name, _)| wanted.contains(&normalize(name)))
-        })
-        .collect()
+    // Rank every requested, alias and fallback name, then keep only the faces
+    // whose best match is the highest-ranked name actually installed. This is
+    // one pass over the database, and it stops a fallback from contributing
+    // when a better face exists.
+    let ranked: HashMap<String, usize> = candidates(family)
+        .into_iter()
+        .enumerate()
+        .map(|(index, name)| (name, index))
+        .collect();
+
+    let mut best: Option<usize> = None;
+    let mut matched = Vec::new();
+    for face in db.faces() {
+        let rank = face
+            .families
+            .iter()
+            .filter_map(|(name, _)| ranked.get(&normalize(name)).copied())
+            .min();
+        let Some(rank) = rank else { continue };
+        match best {
+            Some(current) if rank > current => continue,
+            Some(current) if rank < current => {
+                matched.clear();
+                best = Some(rank);
+            }
+            None => best = Some(rank),
+            _ => {}
+        }
+        matched.push(face);
+    }
+    matched
 }
 
 /// Closest face to the requested weight/style. Word asks for regular, bold and
@@ -226,14 +318,55 @@ mod tests {
     }
 
     #[test]
+    fn groups_gb2312_cuts_with_modern_faces() {
+        let fangsong = candidates("仿宋_GB2312");
+        assert!(fangsong.contains(&"仿宋".to_string()));
+        assert!(fangsong.contains(&"fangsong".to_string()));
+
+        let kaiti = candidates("KaiTi_GB2312");
+        assert!(kaiti.contains(&"楷体".to_string()));
+        assert!(kaiti.contains(&"kaiti".to_string()));
+    }
+
+    #[test]
+    fn falls_back_for_missing_title_face() {
+        let names = candidates("方正小标宋简体");
+        let position = |name: &str| {
+            names
+                .iter()
+                .position(|candidate| candidate == name)
+                .unwrap()
+        };
+        assert!(position("方正小标宋简体") < position("华文中宋"));
+        assert!(position("华文中宋") < position("宋体"));
+
+        // The fallback is one-way: a Song request must not borrow the title face.
+        assert!(!candidates("宋体").contains(&"方正小标宋简体".to_string()));
+    }
+
+    #[test]
     #[ignore = "depends on fonts installed on the host"]
     fn resolves_installed_fonts() {
-        let payload = load_system_fonts(vec!["宋体".to_string(), "Calibri".to_string()]);
+        let payload = load_system_fonts(vec![
+            "宋体".to_string(),
+            "Calibri".to_string(),
+            // The GB2312 cuts are usually absent; these must still resolve
+            // through their modern equivalents and the title-face fallback.
+            "仿宋_GB2312".to_string(),
+            "楷体_GB2312".to_string(),
+            "方正小标宋简体".to_string(),
+        ]);
         assert!(!payload.faces.is_empty(), "no installed face matched");
         assert!(
             payload.files.iter().any(|file| !file.data.is_empty()),
             "matched faces carried no bytes"
         );
         assert!(payload.faces.iter().any(|face| face.style == "normal"));
+        for family in ["仿宋_GB2312", "楷体_GB2312", "方正小标宋简体"] {
+            assert!(
+                payload.faces.iter().any(|face| face.family == family),
+                "{family} did not resolve to an installed face"
+            );
+        }
     }
 }

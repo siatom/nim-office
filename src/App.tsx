@@ -8,6 +8,7 @@ import { Sidebar } from "./components/Sidebar";
 import { TabBar, type TabDescriptor } from "./components/TabBar";
 import { StatusBar } from "./components/StatusBar";
 import { EmptyState } from "./components/EmptyState";
+import { DropOverlay } from "./components/DropOverlay";
 import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
 import { DocxView, type DocxEditorHandle } from "./features/docx/DocxView";
@@ -56,6 +57,7 @@ export default function App() {
   const [pending, setPending] = useState<
     { kind: "tab"; id: string } | { kind: "window" } | null
   >(null);
+  const [dragging, setDragging] = useState(false);
 
   const handles = useRef(new Map<string, DocxEditorHandle>());
   const tabsRef = useRef(tabs);
@@ -300,6 +302,25 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleNew, handleOpen, requestClose, saveTab, zoomBy]);
 
+  // Dropping a file anywhere on the window opens it, which is the fastest path
+  // into the app and avoids a trip through the file dialog.
+  useEffect(() => {
+    const unlisten = getCurrentWindow().onDragDropEvent((event) => {
+      const payload = event.payload;
+      if (payload.type === "enter" || payload.type === "over") {
+        setDragging(true);
+      } else if (payload.type === "drop") {
+        setDragging(false);
+        void openPaths(payload.paths);
+      } else {
+        setDragging(false);
+      }
+    });
+    return () => {
+      void unlisten.then((off) => off());
+    };
+  }, [openPaths]);
+
   useEffect(() => {
     const unlisten = getCurrentWindow().onCloseRequested((event) => {
       if (tabsRef.current.some((tab) => tab.dirty)) {
@@ -449,6 +470,8 @@ export default function App() {
         actions={confirmActions}
         onCancel={() => setPending(null)}
       />
+
+      {dragging && <DropOverlay />}
 
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>

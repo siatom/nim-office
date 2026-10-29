@@ -51,6 +51,10 @@ export function clearRecent() {
   return invoke<void>("clear_recent");
 }
 
+export function agentChat(baseUrl: string, apiKey: string, model: string, messages: Array<{ role: string; content: string }>) {
+  return invoke<string>("agent_chat", { baseUrl, apiKey, model, messages });
+}
+
 export function pathExists(path: string) {
   return invoke<boolean>("path_exists", { path });
 }

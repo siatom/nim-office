@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Bot, Send, Settings2, X } from "lucide-react";
+import { agentChat } from "../lib/ipc";
 
 export interface AgentConfig { baseUrl: string; apiKey: string; model: string }
 export interface AgentDocument { name: string; size: number; pageCount: number; text: string; headings: string[] }
@@ -34,18 +35,10 @@ export function AgentPanel({ open, document, config, onClose, onSettings }: {
     const next = [...messages, { role: "user" as const, content: prompt }];
     setMessages(next); setInput(""); setBusy(true); setError("");
     try {
-      const base = config.baseUrl.trim().replace(/\/$/, "");
-      const response = await fetch(`${base}/chat/completions`, {
-        method: "POST", headers: { "Content-Type": "application/json", ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}) },
-        body: JSON.stringify({ model: config.model, messages: [
+      const answer = await agentChat(config.baseUrl, config.apiKey, config.model, [
           { role: "system", content: `你是 Word 文档阅读助手。只回答问题、总结或解释，不修改文档。根据需要使用提供的文档上下文；长文上下文可能仅包含目录和摘要，不能声称已阅读全文。\n\n${context}` },
           ...next,
-        ] }),
-      });
-      if (!response.ok) throw new Error(`模型请求失败（${response.status}）：${(await response.text()).slice(0, 240)}`);
-      const result = await response.json();
-      const answer = result.choices?.[0]?.message?.content;
-      if (typeof answer !== "string") throw new Error("模型没有返回文本内容");
+        ]);
       setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }

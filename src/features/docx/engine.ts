@@ -36,25 +36,46 @@ export const FIT_ZOOM_MODE: ZoomMode = {
   maxZoom: 1,
 };
 
+/** Bounds for the continuous scale that Ctrl + wheel drives. */
+const MIN_ZOOM = 30;
+const MAX_ZOOM = 400;
+
+/**
+ * Ctrl + wheel moves in even steps instead of jumping rungs: a fitted page sits
+ * on arbitrary percentages (57%), and the ladder would answer 67% then 50%,
+ * which reads as a jump rather than a nudge.
+ */
+export function nudgeZoom(editor: Editor, delta: number): void {
+  const next = Math.min(
+    MAX_ZOOM,
+    Math.max(MIN_ZOOM, Math.round(editor.getZoom() * 100) + delta),
+  );
+  editor.setZoom(next / 100);
+}
+
+/**
+ * Moves to the next rung of {@link ZOOM_STEPS}. Shared by the status-bar buttons
+ * and the shortcuts so every discrete entry point lands on the same scale.
+ */
+export function stepZoom(editor: Editor, direction: 1 | -1): void {
+  const current = Math.round(editor.getZoom() * 100);
+  const next =
+    direction > 0
+      ? (ZOOM_STEPS.find((value) => value > current) ?? ZOOM_STEPS[ZOOM_STEPS.length - 1])
+      : ([...ZOOM_STEPS].reverse().find((value) => value < current) ?? ZOOM_STEPS[0]);
+  editor.setZoom(next / 100);
+}
+
 /** Adapts a docx-editor `Editor` instance to the app's engine contract. */
 export function createDocxEngine(editor: Editor): DocxEngineHandle {
   const currentPercent = () => Math.round(editor.getZoom() * 100);
-
-  const step = (direction: 1 | -1) => {
-    const current = currentPercent();
-    const next =
-      direction > 0
-        ? (ZOOM_STEPS.find((value) => value > current) ?? ZOOM_STEPS[ZOOM_STEPS.length - 1])
-        : ([...ZOOM_STEPS].reverse().find((value) => value < current) ?? ZOOM_STEPS[0]);
-    editor.setZoom(next / 100);
-  };
 
   return {
     exportDocx: async () => new Uint8Array(await editor.save()),
     getZoom: currentPercent,
     setZoom: (percent) => editor.setZoom(percent / 100),
-    zoomIn: () => step(1),
-    zoomOut: () => step(-1),
+    zoomIn: () => stepZoom(editor, 1),
+    zoomOut: () => stepZoom(editor, -1),
     // Back to the adaptive scale rather than a pinned 100%: the window decides.
     resetZoom: () => editor.setZoomMode(FIT_ZOOM_MODE),
   };

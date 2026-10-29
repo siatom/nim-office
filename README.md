@@ -83,8 +83,8 @@ renamed, so an interrupted save cannot truncate the original.
 ## Development
 
 ```bash
-npm install
-npm run tauri dev
+pnpm install
+pnpm tauri dev
 ```
 
 The dev server runs on port **1430** (Tauri's default 1420 is frequently taken when several
@@ -93,7 +93,7 @@ Tauri projects run side by side).
 Release build:
 
 ```bash
-npm run tauri build
+pnpm tauri build
 ```
 
 Requires Node 20+, Rust 1.77+, and the platform Tauri prerequisites.

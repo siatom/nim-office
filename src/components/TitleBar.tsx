@@ -44,6 +44,7 @@ export function TitleBar({
   onCloseTab,
   onNewTab,
   onToggleSidebar,
+  onShowWelcome,
 }: {
   tabs: TabDescriptor[];
   activeId: string | null;
@@ -52,6 +53,7 @@ export function TitleBar({
   onCloseTab: (id: string) => void;
   onNewTab: () => void;
   onToggleSidebar: () => void;
+  onShowWelcome: () => void;
 }) {
   const [maximized, setMaximized] = useState(false);
 
@@ -95,13 +97,18 @@ export function TitleBar({
             <PanelLeftOpen size={15} strokeWidth={1.8} />
           )}
         </button>
-        <Logo size={16} />
-        <span
-          data-tauri-drag-region
-          className="text-[12px] font-medium tracking-tight text-ink"
+        <button
+          type="button"
+          onClick={onShowWelcome}
+          aria-label="回到欢迎页"
+          title="回到欢迎页"
+          className="-ml-1 flex shrink-0 items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-surface"
         >
-          One Office
-        </span>
+          <Logo size={16} />
+          <span className="text-[12px] font-medium tracking-tight text-ink">
+            One Office
+          </span>
+        </button>
       </div>
 
       {tabs.length > 0 ? (

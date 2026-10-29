@@ -62,6 +62,9 @@ export default function App() {
     { kind: "tab"; id: string } | { kind: "window" } | null
   >(null);
   const [dragging, setDragging] = useState(false);
+  // The welcome page is also reachable while documents stay open, so it needs
+  // its own flag rather than being derived from an empty tab list.
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(
     () => localStorage.getItem(SIDEBAR_KEY) !== "collapsed",
   );
@@ -73,6 +76,10 @@ export default function App() {
   activeIdRef.current = activeId;
 
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? null;
+  const showWelcome = welcomeOpen || tabs.length === 0;
+  // The status bar describes the document on screen, so it goes quiet while the
+  // welcome page is in front of it.
+  const statusTab = showWelcome ? null : activeTab;
 
   const pushToast = useCallback((kind: ToastKind, message: string) => {
     setToasts((prev) => [...prev, { id: Date.now() + Math.random(), kind, message }]);
@@ -84,6 +91,11 @@ export default function App() {
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((open) => !open);
+  }, []);
+
+  const selectTab = useCallback((id: string) => {
+    setActiveId(id);
+    setWelcomeOpen(false);
   }, []);
 
   useEffect(() => {
@@ -116,6 +128,7 @@ export default function App() {
         const existing = tabsRef.current.find((tab) => tab.path === path);
         if (existing) {
           setActiveId(existing.id);
+          setWelcomeOpen(false);
           continue;
         }
 
@@ -139,6 +152,7 @@ export default function App() {
           };
           setTabs((prev) => [...prev, tab]);
           setActiveId(id);
+          setWelcomeOpen(false);
           setRecent(await pushRecent(path));
         } catch (error) {
           pushToast("error", errorMessage(error));
@@ -181,6 +195,7 @@ export default function App() {
       },
     ]);
     setActiveId(id);
+    setWelcomeOpen(false);
   }, []);
 
   const saveTab = useCallback(
@@ -418,10 +433,11 @@ export default function App() {
         tabs={tabDescriptors}
         activeId={activeId}
         sidebarOpen={sidebarOpen}
-        onSelectTab={setActiveId}
+        onSelectTab={selectTab}
         onCloseTab={requestClose}
         onNewTab={handleNew}
         onToggleSidebar={toggleSidebar}
+        onShowWelcome={() => setWelcomeOpen(true)}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -450,7 +466,7 @@ export default function App() {
 
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">
-            {tabs.length === 0 && (
+            {showWelcome && (
               <EmptyState
                 recent={recent}
                 onOpen={handleOpen}
@@ -469,7 +485,13 @@ export default function App() {
             {tabs
               .filter((tab) => mounted.includes(tab.id))
               .map((tab) => (
-                <div key={tab.id} className={clsx("h-full", tab.id !== activeId && "hidden")}>
+                <div
+                  key={tab.id}
+                  className={clsx(
+                    "h-full",
+                    (showWelcome || tab.id !== activeId) && "hidden",
+                  )}
+                >
                   <DocxView
                     bytes={tab.data}
                     colorMode={isDark ? "dark" : "light"}
@@ -488,12 +510,12 @@ export default function App() {
       </div>
 
       <StatusBar
-        name={activeTab?.name ?? null}
-        kind={activeTab?.kind ?? null}
-        size={activeTab?.size ?? 0}
-        dirty={activeTab?.dirty ?? false}
-        persisted={activeTab?.path != null}
-        saving={activeTab?.saving ?? false}
+        name={statusTab?.name ?? null}
+        kind={statusTab?.kind ?? null}
+        size={statusTab?.size ?? 0}
+        dirty={statusTab?.dirty ?? false}
+        persisted={statusTab?.path != null}
+        saving={statusTab?.saving ?? false}
         zoom={zoom}
         hint={recent.length > 0 ? "Ctrl + O 打开文档" : "就绪"}
       />

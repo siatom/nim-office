@@ -362,6 +362,108 @@
   --docx-nav-shift: var(--oo-outline-shift) !important;
 }
 
+/* Keep both rulers quiet and precise, with clearer tick contrast and a soft
+   edge that ties them into the editor chrome. */
+.docx-editor :is(.docx-horizontal-ruler, .docx-vertical-ruler) {
+  border-color: color-mix(in srgb, var(--border-strong) 78%, transparent);
+  border-radius: 6px;
+  background-color: color-mix(in srgb, var(--surface) 92%, var(--bg)) !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
+}
+
+.docx-editor .docx-horizontal-ruler {
+  border-bottom: 1px solid color-mix(in srgb, var(--border-strong) 78%, transparent);
+}
+
+.docx-editor .docx-vertical-ruler {
+  border-inline-end: 1px solid color-mix(in srgb, var(--border-strong) 78%, transparent);
+}
+
+.docx-editor .docx-horizontal-ruler [style*="width: 1px"],
+.docx-editor .docx-vertical-ruler [style*="height: 1px"] {
+  background-color: color-mix(in srgb, var(--text-muted) 48%, transparent) !important;
+}
+
+.docx-editor :is(.docx-ruler-indent, .docx-ruler-marker) {
+  filter: drop-shadow(0 1px 1px rgb(15 23 42 / 22%));
+  transition: filter 120ms ease;
+}
+
+.docx-editor :is(.docx-ruler-indent, .docx-ruler-marker):hover {
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--accent) 48%, transparent));
+}
+
+.docx-editor :is(.docx-ruler-indent, .docx-ruler-marker):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.docx-editor :is(.docx-ruler-indent, .docx-ruler-marker)[role="slider"] {
+  cursor: grab;
+}
+
+.docx-editor :is(.docx-ruler-indent, .docx-ruler-marker)[role="slider"]:active {
+  cursor: grabbing;
+}
+
+/* Make the outline feel like a compact navigation card rather than a bare
+   extension of the page canvas. */
+.docx-editor .docx-nav__panel-shell {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 78%, transparent);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.docx-editor .docx-nav__header {
+  gap: 10px;
+  padding: 16px 14px 10px;
+}
+
+.docx-editor .docx-nav__title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.docx-editor .docx-nav__close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.docx-editor .docx-nav__tabs {
+  gap: 6px;
+  margin: 0 12px 10px;
+  padding: 0 2px;
+}
+
+.docx-editor .docx-nav__tab {
+  padding: 8px 10px;
+  border-radius: 7px 7px 0 0;
+  font-weight: 500;
+}
+
+.docx-editor .docx-nav__heading {
+  margin-block: 2px;
+  padding-block: 7px;
+  padding-inline-start: 9px;
+  border-radius: 7px;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.docx-editor .docx-nav__heading--current {
+  color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.docx-editor .docx-nav__searchbox {
+  margin: 0 12px 10px;
+  border-radius: 8px;
+}
+
 .docx-editor--multi-page .docx-pages {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, var(--oo-multi-page-width, 800px));

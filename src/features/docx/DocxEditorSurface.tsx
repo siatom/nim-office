@@ -786,6 +786,7 @@ export default function DocxEditorSurface({
               className={outlineOpen ? "oo-docx-viewport--with-outline" : "oo-docx-viewport--no-outline"}
               style={{ flex: 1, minHeight: 0 }}
             >
+              <DocxEditor.VerticalRuler unit="cm" />
               <DocxEditor.Content />
               <DocxEditor.HeaderFooterChrome />
               <DocxEditor.HyperLink />

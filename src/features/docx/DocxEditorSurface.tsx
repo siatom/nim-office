@@ -427,6 +427,7 @@ export default function DocxEditorSurface({
             onClose={() => setStyleManagerOpen(false)}
             onDirty={onDirty}
           />
+          <DocxEditor.HorizontalRuler unit="cm" />
           <div className="relative flex min-h-0 flex-1">
             {/* Headings, find and go-to over the left gutter. The toolbar action is
                 the entry point, so the engine's floating disc is suppressed. The tab

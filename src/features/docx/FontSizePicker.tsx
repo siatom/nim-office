@@ -44,7 +44,7 @@ export function FontSizePicker() {
   return (
     <select
       aria-label="字号"
-      className="h-8 w-[88px] rounded-md border border-[var(--doc-border)] bg-[var(--doc-bg-input)] px-2 text-[12px] text-[var(--doc-text)] outline-none focus:border-[var(--doc-primary)]"
+      className="h-8 w-[88px] rounded-md border border-[var(--doc-border)] bg-[var(--doc-bg-input)] px-2 font-sans text-[12px] text-[var(--doc-text)] outline-none focus:border-[var(--doc-primary)]"
       disabled={!fontSize.isEnabled}
       onChange={(event) => {
         const optionId = event.currentTarget.value;

@@ -12,12 +12,13 @@ import {
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { ListTree, Loader2, Settings2 } from "lucide-react";
+import { ListTree, Loader2, Ruler, Settings2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
 import { FindReplacePanel } from "./FindReplacePanel";
 import ParagraphDialog from "./ParagraphDialog";
+import PageMarginsDialog from "./PageMarginsDialog";
 import { ParagraphStylePickerContent } from "./ParagraphStylePicker";
 import { ParagraphStyleManager } from "./ParagraphStyleManager";
 import { createDocxEngine, FIT_ZOOM_MODE, nudgeZoom, type ZoomDisplayMode } from "./engine";
@@ -197,6 +198,7 @@ export default function DocxEditorSurface({
   // visible, shifting the first page right on a restored window.
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [styleManagerOpen, setStyleManagerOpen] = useState(false);
+  const [pageMarginsOpen, setPageMarginsOpen] = useState(false);
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
@@ -455,6 +457,11 @@ export default function DocxEditorSurface({
               <DocxEditor.Toolbar.Subscript className="oo-text-order-6" />
             </DocxEditor.Toolbar.Group>
             <DocxEditor.Toolbar.Action
+              label="页边距"
+              icon={<Ruler size={18} strokeWidth={1.8} />}
+              onSelect={() => setPageMarginsOpen(true)}
+            />
+            <DocxEditor.Toolbar.Action
               label="管理段落样式"
               icon={<Settings2 size={18} strokeWidth={1.8} />}
               onSelect={() => setStyleManagerOpen(true)}
@@ -471,6 +478,7 @@ export default function DocxEditorSurface({
             onClose={() => setStyleManagerOpen(false)}
             onDirty={onDirty}
           />
+          <PageMarginsDialog open={pageMarginsOpen} onClose={() => setPageMarginsOpen(false)} />
           <DocxEditor.HorizontalRuler unit="cm" />
           <PageCornerMarks hostRef={hostRef} />
           <div className="relative flex min-h-0 flex-1">

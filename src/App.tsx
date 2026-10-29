@@ -11,10 +11,10 @@ import { EmptyState } from "./components/EmptyState";
 import { DropOverlay } from "./components/DropOverlay";
 import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
-import { DocxView, type DocxEditorHandle } from "./features/docx/DocxView";
+import { DocxView } from "./features/docx/DocxView";
+import type { DocxEngineHandle } from "./features/docx/engine";
 import { useTheme } from "./hooks/useTheme";
 import { useAccent } from "./hooks/useAccent";
-import { applySuperdocTheme } from "./lib/superdoc-theme";
 import { base64ToBytes } from "./lib/base64";
 import {
   listRecent,
@@ -61,7 +61,7 @@ export default function App() {
   >(null);
   const [dragging, setDragging] = useState(false);
 
-  const handles = useRef(new Map<string, DocxEditorHandle>());
+  const handles = useRef(new Map<string, DocxEngineHandle>());
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const activeIdRef = useRef(activeId);
@@ -80,10 +80,6 @@ export default function App() {
   const patchTab = useCallback((id: string, patch: Partial<DocTab>) => {
     setTabs((prev) => prev.map((tab) => (tab.id === id ? { ...tab, ...patch } : tab)));
   }, []);
-
-  useEffect(() => {
-    applySuperdocTheme(isDark);
-  }, [isDark]);
 
   useEffect(() => {
     listRecent()
@@ -439,12 +435,14 @@ export default function App() {
                 <div key={tab.id} className={clsx("h-full", tab.id !== activeId && "hidden")}>
                   <DocxView
                     bytes={tab.data}
+                    colorMode={isDark ? "dark" : "light"}
                     onReady={(handle) => {
                       handles.current.set(tab.id, handle);
                     }}
                     onDirty={() => patchTab(tab.id, { dirty: true })}
                     onError={(message) => pushToast("error", message)}
                     onZoomChange={setZoom}
+                    onSave={() => void saveTab(tab.id)}
                   />
                 </div>
               ))}

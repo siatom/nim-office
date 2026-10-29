@@ -9,8 +9,8 @@ function readStored(): string {
 
 /**
  * Owns the accent colour. The value is a single base hex; every surface derives
- * from it through the `--accent*` variables in `index.css`, including SuperDoc's
- * chrome and the app mark.
+ * from it through the `--accent*` variables in `index.css`, including the
+ * document editor's chrome and the app mark.
  */
 export function useAccent() {
   const [color, setColor] = useState(readStored);

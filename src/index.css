@@ -129,16 +129,9 @@
   }
 }
 
-/* SuperDoc ships its own chrome; align it with the app surface. */
-.superdoc-host {
-  height: 100%;
-  overflow: auto;
+/* docx-editor owns its scroll container; the host only supplies the frame. */
+.docx-editor {
   background: var(--bg);
-}
-
-.superdoc-host .superdoc {
-  --sd-ui-bg: var(--surface);
-  --sd-ui-text: var(--text);
 }
 
 @keyframes rise-in {
@@ -194,31 +187,5 @@
 
 .no-drag {
   -webkit-app-region: no-drag;
-}
-
-/* SuperDoc renders a flex row of pages; centre it so the page reads as a sheet
-   of paper rather than a block glued to the left edge. `safe` keeps the left
-   edge reachable when the page is wider than the viewport. */
-.superdoc-host .superdoc {
-  justify-content: safe center;
-}
-
-.superdoc-host .superdoc__layers {
-  flex-shrink: 0;
-}
-
-/* Breathing room above and below the page so it reads as a sheet on a desk. */
-.superdoc-host .superdoc {
-  padding: 18px 0 44px;
-}
-
-
-/* The page paints its background from an inline `var(--sd-layout-page-bg)`.
-   Word keeps the paper white in dark mode and so do we: document text is
-   authored for a white page, so inheriting the dark UI surface would make it
-   unreadable. */
-.superdoc-host {
-  --sd-layout-page-bg: #ffffff;
-  --sd-layout-page-color: #000000;
 }
 

@@ -201,6 +201,22 @@ export default function DocxEditorSurface({
   const [styleManagerOpen, setStyleManagerOpen] = useState(false);
   const [breakMenuOpen, setBreakMenuOpen] = useState(false);
   const breaksAnchorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!breakMenuOpen) return;
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && !breaksAnchorRef.current?.contains(target)) setBreakMenuOpen(false);
+    };
+    const dismissOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setBreakMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", dismissOutside, true);
+    document.addEventListener("keydown", dismissOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissOutside, true);
+      document.removeEventListener("keydown", dismissOnEscape);
+    };
+  }, [breakMenuOpen]);
   const [pageMarginsOpen, setPageMarginsOpen] = useState(false);
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);

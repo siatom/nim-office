@@ -62,8 +62,8 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-text: var(--accent-text);
   --color-danger: var(--danger);
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC",
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB",
     "Noto Sans CJK SC", sans-serif;
   --shadow-card: var(--shadow-md);
 }

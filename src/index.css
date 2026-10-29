@@ -134,6 +134,48 @@
   background: var(--bg);
 }
 
+/* Unit picker inside the Paragraph dialog's measurement rows. It sits where the
+   packaged controls put their static unit label, so it reads as a label that
+   happens to be editable rather than as a second input. */
+.oo-unit {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.oo-unit__select {
+  appearance: none;
+  height: 24px;
+  padding: 0 14px 0 3px;
+  font: inherit;
+  font-size: 0.92em;
+  color: var(--doc-text-muted, var(--text-muted));
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+
+.oo-unit__select:hover {
+  color: var(--doc-text, var(--text));
+  background: var(--doc-bg-hover, var(--surface-muted));
+}
+
+.oo-unit__select:focus-visible {
+  color: var(--doc-text, var(--text));
+  outline: 2px solid var(--doc-primary, var(--accent));
+  outline-offset: 1px;
+}
+
+.oo-unit__caret {
+  position: absolute;
+  right: 3px;
+  pointer-events: none;
+  color: var(--doc-text-subtle, var(--text-subtle));
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;

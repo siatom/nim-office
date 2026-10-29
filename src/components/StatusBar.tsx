@@ -4,6 +4,7 @@ import {
   Check,
   CircleCheck,
   CircleDot,
+  Columns3,
   Maximize2,
   Minimize2,
   Minus,
@@ -25,6 +26,8 @@ const ZOOM_PRESETS = [...ZOOM_STEPS].reverse();
  * and the presets stay in one place instead of splitting across two corners.
  */
 function ZoomControl({
+  multiPage,
+  onToggleMultiPage,
   zoom,
   zoomMode,
   onZoomIn,
@@ -33,6 +36,8 @@ function ZoomControl({
   onZoomFit,
   onZoomFitPage,
 }: {
+  multiPage: boolean;
+  onToggleMultiPage: () => void;
   zoom: number;
   zoomMode: ZoomDisplayMode;
   onZoomIn: () => void;
@@ -87,6 +92,19 @@ function ZoomControl({
 
   return (
     <div ref={groupRef} className="flex items-center gap-0.5">
+      <button
+        type="button"
+        onClick={onToggleMultiPage}
+        title={multiPage ? "关闭多页视图" : "开启多页视图"}
+        aria-label="多页视图"
+        aria-pressed={multiPage}
+        className={clsx(
+          "grid size-5 place-items-center rounded transition-colors",
+          multiPage ? "bg-surface-raised text-accent" : "text-ink-muted hover:bg-surface-raised hover:text-ink",
+        )}
+      >
+        <Columns3 size={13} strokeWidth={2} />
+      </button>
       <button
         type="button"
         onClick={onZoomOut}
@@ -203,10 +221,12 @@ export function StatusBar({
   saving,
   zoom,
   zoomMode,
+  multiPage,
   hint,
   persisted,
   fullscreen,
   onZoomIn,
+  onToggleMultiPage,
   onZoomOut,
   onZoomTo,
   onZoomFit,
@@ -220,10 +240,12 @@ export function StatusBar({
   saving: boolean;
   zoom: number;
   zoomMode: ZoomDisplayMode;
+  multiPage: boolean;
   hint?: string;
   persisted: boolean;
   fullscreen: boolean;
   onZoomIn: () => void;
+  onToggleMultiPage: () => void;
   onZoomOut: () => void;
   onZoomTo: (percent: number) => void;
   onZoomFit: () => void;
@@ -272,6 +294,8 @@ export function StatusBar({
           <>
             <span className="h-3 w-px bg-line" />
             <ZoomControl
+              multiPage={multiPage}
+              onToggleMultiPage={onToggleMultiPage}
               zoom={zoom}
               zoomMode={zoomMode}
               onZoomIn={onZoomIn}

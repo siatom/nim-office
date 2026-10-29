@@ -71,6 +71,7 @@ export default function App() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [zoom, setZoom] = useState(1);
   const [zoomMode, setZoomMode] = useState<ZoomDisplayMode>("page-width");
+  const [multiPage, setMultiPage] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [pending, setPending] = useState<
     { kind: "tab"; id: string } | { kind: "window" } | null
@@ -672,6 +673,7 @@ export default function App() {
                     <DocxView
                       bytes={tab.data}
                       colorMode={isDark ? "dark" : "light"}
+                      multiPage={multiPage}
                       onReady={(handle) => {
                         handles.current.set(tab.id, handle);
                         if (tab.id === activeIdRef.current) {
@@ -709,6 +711,8 @@ export default function App() {
         saving={statusTab?.saving ?? false}
         zoom={zoom}
         zoomMode={zoomMode}
+        multiPage={multiPage}
+        onToggleMultiPage={() => setMultiPage((enabled) => !enabled)}
         fullscreen={fullscreen}
         onZoomIn={() => zoomBy(1)}
         onZoomOut={() => zoomBy(-1)}

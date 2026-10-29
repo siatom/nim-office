@@ -4,6 +4,7 @@ import type { DocxEngineHandle, ZoomDisplayMode } from "./engine";
 export interface DocxSurfaceProps {
   bytes: Uint8Array;
   colorMode: "light" | "dark";
+  multiPage: boolean;
   onReady: (handle: DocxEngineHandle) => void;
   onDirty: () => void;
   onError: (message: string) => void;

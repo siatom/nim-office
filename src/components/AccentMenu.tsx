@@ -76,19 +76,11 @@ export function AccentMenu({
         aria-expanded={open}
         title="主题色"
         className={clsx(
-          "relative grid size-7 shrink-0 place-items-center rounded-md transition-colors",
+          "grid size-7 shrink-0 place-items-center rounded-md transition-colors",
           open ? "bg-surface text-ink" : "text-ink-muted hover:bg-surface hover:text-ink",
         )}
       >
         <Palette size={15} strokeWidth={1.8} />
-        <span
-          aria-hidden
-          className="absolute bottom-[3px] right-[3px] size-[6px] rounded-full"
-          style={{
-            backgroundColor: accent,
-            boxShadow: "0 0 0 1.5px var(--surface-muted)",
-          }}
-        />
       </button>
 
       {open && (

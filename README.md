@@ -32,7 +32,7 @@ A frameless window with a custom title bar and a left sidebar instead of a nativ
 │  · file    │            document page                │
 │  · file    │                                         │
 │            │                                         │
-│ Dark mode  │                                         │
+│ Appearance │                                         │
 ├────────────┴─────────────────────────────────────────┤
 │ status: saved · size · zoom                          │
 └──────────────────────────────────────────────────────┘
@@ -40,6 +40,10 @@ A frameless window with a custom title bar and a left sidebar instead of a nativ
 
 Shortcuts: `Ctrl+N` new, `Ctrl+O` open, `Ctrl+S` save, `Ctrl+Shift+S` save as,
 `Ctrl+W` close tab, `Ctrl+=` / `Ctrl+-` / `Ctrl+0` zoom.
+
+The appearance panel at the bottom of the sidebar offers light / dark / system mode, eight accent
+presets, and a custom colour picker. The accent is persisted locally and repaints buttons,
+selection highlights, the app mark, and SuperDoc's toolbar chrome.
 
 On macOS the native traffic lights are kept and only the title is hidden, so the app still
 feels native there.
@@ -74,6 +78,7 @@ src/
   components/              Title bar, sidebar, tab bar, status bar, dialogs, toasts
   features/docx/           SuperDoc mount, lifecycle, export
   lib/superdoc-theme.ts    Light/dark themes mapped onto the app's design tokens
+  lib/accents.ts           Accent presets and contrast-safe ink for custom colours
   lib/ipc.ts               Typed wrappers around invoke()
 ```
 

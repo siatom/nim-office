@@ -1,9 +1,17 @@
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { Check, CircleCheck, CircleDot, Minus, Plus } from "lucide-react";
+import {
+  Check,
+  CircleCheck,
+  CircleDot,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Plus,
+} from "lucide-react";
 import type { DocumentKind } from "../lib/ipc";
 import { KIND_LABEL, formatBytes } from "../lib/format";
-import { ZOOM_STEPS } from "../features/docx/engine";
+import { ZOOM_STEPS, type ZoomDisplayMode } from "../features/docx/engine";
 
 const ZOOM_MENU_WIDTH = 148;
 const ZOOM_MENU_GAP = 10;
@@ -18,22 +26,28 @@ const ZOOM_PRESETS = [...ZOOM_STEPS].reverse();
  */
 function ZoomControl({
   zoom,
+  zoomMode,
   onZoomIn,
   onZoomOut,
   onZoomTo,
   onZoomFit,
+  onZoomFitPage,
 }: {
   zoom: number;
+  zoomMode: ZoomDisplayMode;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomTo: (percent: number) => void;
   onZoomFit: () => void;
+  onZoomFitPage: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState({ right: 0, bottom: 0 });
   const groupRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const percent = Math.round(zoom * 100);
+  const zoomLabel =
+    zoomMode === "page-width" ? "页宽" : zoomMode === "page" ? "整页" : `${percent}%`;
 
   const toggle = () => {
     if (!open && groupRef.current) {
@@ -88,7 +102,7 @@ function ZoomControl({
         type="button"
         onClick={toggle}
         title="缩放级别"
-        aria-label={`缩放级别 ${percent}%`}
+        aria-label={`缩放级别 ${zoomLabel}，${percent}%`}
         aria-haspopup="menu"
         aria-expanded={open}
         className={clsx(
@@ -98,7 +112,7 @@ function ZoomControl({
             : "text-ink-muted hover:bg-surface-raised hover:text-ink",
         )}
       >
-        {percent}%
+        {zoomLabel}
       </button>
 
       <button
@@ -120,7 +134,7 @@ function ZoomControl({
           className="anim-pop fixed z-50 rounded-xl border border-line bg-surface-raised p-1 shadow-card dark:border-line-strong"
         >
           {ZOOM_PRESETS.map((preset) => {
-            const selected = preset === percent;
+            const selected = zoomMode === "fixed" && preset === percent;
             return (
               <button
                 key={preset}
@@ -146,14 +160,34 @@ function ZoomControl({
 
           <button
             type="button"
-            role="menuitem"
+            role="menuitemradio"
+            aria-checked={zoomMode === "page-width"}
             onClick={() => {
               onZoomFit();
               setOpen(false);
             }}
+            className="flex h-7 w-full items-center justify-between rounded-md px-2 text-[12px] text-ink transition-colors hover:bg-surface-muted"
+          >
+            <span>页宽</span>
+            {zoomMode === "page-width" && (
+              <Check size={12} strokeWidth={2.6} className="ml-auto" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={zoomMode === "page"}
+            onClick={() => {
+              onZoomFitPage();
+              setOpen(false);
+            }}
             className="flex h-7 w-full items-center rounded-md px-2 text-[12px] text-ink transition-colors hover:bg-surface-muted"
           >
-            页宽
+            <span>整页</span>
+            {zoomMode === "page" && (
+              <Check size={12} strokeWidth={2.6} className="ml-auto" />
+            )}
           </button>
         </div>
       )}
@@ -168,12 +202,16 @@ export function StatusBar({
   dirty,
   saving,
   zoom,
+  zoomMode,
   hint,
   persisted,
+  fullscreen,
   onZoomIn,
   onZoomOut,
   onZoomTo,
   onZoomFit,
+  onZoomFitPage,
+  onToggleFullscreen,
 }: {
   name: string | null;
   kind: DocumentKind | null;
@@ -181,12 +219,16 @@ export function StatusBar({
   dirty: boolean;
   saving: boolean;
   zoom: number;
+  zoomMode: ZoomDisplayMode;
   hint?: string;
   persisted: boolean;
+  fullscreen: boolean;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomTo: (percent: number) => void;
   onZoomFit: () => void;
+  onZoomFitPage: () => void;
+  onToggleFullscreen: () => void;
 }) {
   return (
     <footer className="flex h-7 shrink-0 items-center justify-between gap-4 border-t border-line bg-surface-muted px-3 text-[11px] text-ink-muted">
@@ -231,13 +273,29 @@ export function StatusBar({
             <span className="h-3 w-px bg-line" />
             <ZoomControl
               zoom={zoom}
+              zoomMode={zoomMode}
               onZoomIn={onZoomIn}
               onZoomOut={onZoomOut}
               onZoomTo={onZoomTo}
               onZoomFit={onZoomFit}
+              onZoomFitPage={onZoomFitPage}
             />
           </>
         )}
+        {name && <span className="h-3 w-px bg-line" />}
+        <button
+          type="button"
+          onClick={onToggleFullscreen}
+          title={fullscreen ? "退出全屏" : "进入全屏"}
+          aria-label={fullscreen ? "退出全屏" : "进入全屏"}
+          className="grid size-5 place-items-center rounded text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink"
+        >
+          {fullscreen ? (
+            <Minimize2 size={12} strokeWidth={2} />
+          ) : (
+            <Maximize2 size={12} strokeWidth={2} />
+          )}
+        </button>
       </div>
     </footer>
   );

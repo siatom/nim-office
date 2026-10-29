@@ -14,7 +14,7 @@ import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
 import { DocxLoadingState, DocxView } from "./features/docx/DocxView";
-import type { DocxEngineHandle } from "./features/docx/engine";
+import type { DocxEngineHandle, ZoomDisplayMode } from "./features/docx/engine";
 import { useTheme } from "./hooks/useTheme";
 import { useAccent } from "./hooks/useAccent";
 import { base64ToBytes } from "./lib/base64";
@@ -70,6 +70,8 @@ export default function App() {
   const [recent, setRecent] = useState<RecentEntry[]>([]);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [zoom, setZoom] = useState(1);
+  const [zoomMode, setZoomMode] = useState<ZoomDisplayMode>("page-width");
+  const [fullscreen, setFullscreen] = useState(false);
   const [pending, setPending] = useState<
     { kind: "tab"; id: string } | { kind: "window" } | null
   >(null);
@@ -140,7 +142,27 @@ export default function App() {
   useEffect(() => {
     const handle = activeId ? handles.current.get(activeId) : undefined;
     setZoom(handle ? handle.getZoom() / 100 : 1);
+    setZoomMode(handle?.getZoomMode() ?? "page-width");
   }, [activeId]);
+
+  useEffect(() => {
+    const win = getCurrentWindow();
+    let active = true;
+    const syncFullscreen = () => {
+      void win
+        .isFullscreen()
+        .then((value) => {
+          if (active) setFullscreen(value);
+        })
+        .catch(() => undefined);
+    };
+    syncFullscreen();
+    const unlisten = win.onResized(syncFullscreen);
+    return () => {
+      active = false;
+      void unlisten.then((off) => off());
+    };
+  }, []);
 
   const openPaths = useCallback(
     async (paths: string[]) => {
@@ -362,6 +384,7 @@ export default function App() {
     if (direction > 0) handle.zoomIn();
     else handle.zoomOut();
     setZoom(handle.getZoom() / 100);
+    setZoomMode(handle.getZoomMode());
   }, []);
 
   // The status-bar menu picks a rung directly instead of walking the ladder.
@@ -372,6 +395,7 @@ export default function App() {
     if (!handle) return;
     handle.setZoom(percent);
     setZoom(handle.getZoom() / 100);
+    setZoomMode(handle.getZoomMode());
   }, []);
 
   // "页宽" is the adaptive scale, not a pinned percentage.
@@ -382,7 +406,29 @@ export default function App() {
     if (!handle) return;
     handle.resetZoom();
     setZoom(handle.getZoom() / 100);
+    setZoomMode(handle.getZoomMode());
   }, []);
+
+  const zoomFitPage = useCallback(() => {
+    const id = activeIdRef.current;
+    if (!id) return;
+    const handle = handles.current.get(id);
+    if (!handle) return;
+    handle.fitPage();
+    setZoom(handle.getZoom() / 100);
+    setZoomMode(handle.getZoomMode());
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    const win = getCurrentWindow();
+    try {
+      const next = !(await win.isFullscreen());
+      await win.setFullscreen(next);
+      setFullscreen(next);
+    } catch (error) {
+      pushToast("error", errorMessage(error));
+    }
+  }, [pushToast]);
 
   // Undecorated windows lose the native menu, so the shortcuts it would have
   // owned are registered here instead.
@@ -629,13 +675,20 @@ export default function App() {
                       colorMode={isDark ? "dark" : "light"}
                       onReady={(handle) => {
                         handles.current.set(tab.id, handle);
+                        if (tab.id === activeIdRef.current) {
+                          setZoom(handle.getZoom() / 100);
+                          setZoomMode(handle.getZoomMode());
+                        }
                       }}
                       onDirty={() => markTabDirty(tab.id)}
                       onError={(message) => pushToast("error", message)}
                       // Background tabs keep their editors mounted; only the
                       // document on screen may own the status-bar readout.
-                      onZoomChange={(value) => {
-                        if (tab.id === activeIdRef.current) setZoom(value);
+                      onZoomChange={(value, mode) => {
+                        if (tab.id === activeIdRef.current) {
+                          setZoom(value);
+                          setZoomMode(mode);
+                        }
                       }}
                       onSave={() => void saveTab(tab.id)}
                     />
@@ -656,10 +709,14 @@ export default function App() {
         persisted={statusTab?.path != null}
         saving={statusTab?.saving ?? false}
         zoom={zoom}
+        zoomMode={zoomMode}
+        fullscreen={fullscreen}
         onZoomIn={() => zoomBy(1)}
         onZoomOut={() => zoomBy(-1)}
         onZoomTo={zoomTo}
         onZoomFit={zoomFit}
+        onZoomFitPage={zoomFitPage}
+        onToggleFullscreen={() => void toggleFullscreen()}
         hint={recent.length > 0 ? "Ctrl + O 打开文档" : "就绪"}
       />
 

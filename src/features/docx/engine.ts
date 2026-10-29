@@ -13,13 +13,23 @@ export interface DocxEngineHandle {
   exportDocx: () => Promise<Uint8Array>;
   /** Current display scale as a percentage (100 = authored size). */
   getZoom: () => number;
+  getZoomMode: () => ZoomDisplayMode;
   /** Set display scale from a percentage. */
   setZoom: (percent: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
+  fitPage: () => void;
   /** Toggle superscript or subscript on the current selection. */
   formatScript: (script: "superscript" | "subscript") => void;
+}
+
+export type ZoomDisplayMode = "fixed" | "page-width" | "page";
+
+interface ZoomModeController {
+  get: () => ZoomDisplayMode;
+  set: (mode: ZoomDisplayMode) => void;
+  fitPage: () => void;
 }
 
 /** Zoom ladder shared by the shortcuts and the status-bar readout. */
@@ -69,17 +79,34 @@ export function stepZoom(editor: Editor, direction: 1 | -1): void {
 }
 
 /** Adapts a docx-editor `Editor` instance to the app's engine contract. */
-export function createDocxEngine(editor: Editor): DocxEngineHandle {
+export function createDocxEngine(
+  editor: Editor,
+  zoomMode: ZoomModeController,
+): DocxEngineHandle {
   const currentPercent = () => Math.round(editor.getZoom() * 100);
 
   return {
     exportDocx: async () => new Uint8Array(await editor.save()),
     getZoom: currentPercent,
-    setZoom: (percent) => editor.setZoom(percent / 100),
-    zoomIn: () => stepZoom(editor, 1),
-    zoomOut: () => stepZoom(editor, -1),
+    getZoomMode: zoomMode.get,
+    setZoom: (percent) => {
+      zoomMode.set("fixed");
+      editor.setZoom(percent / 100);
+    },
+    zoomIn: () => {
+      zoomMode.set("fixed");
+      stepZoom(editor, 1);
+    },
+    zoomOut: () => {
+      zoomMode.set("fixed");
+      stepZoom(editor, -1);
+    },
     // Back to the adaptive scale rather than a pinned 100%: the window decides.
-    resetZoom: () => editor.setZoomMode(FIT_ZOOM_MODE),
+    resetZoom: () => {
+      zoomMode.set("page-width");
+      editor.setZoomMode(FIT_ZOOM_MODE);
+    },
+    fitPage: zoomMode.fitPage,
     formatScript: (script) => {
       const command = commandForSlot(script === "superscript" ? "script.super" : "script.sub");
       if (command) editor.exec(command);

@@ -300,6 +300,26 @@ export default function App() {
     setZoom(handle.getZoom() / 100);
   }, []);
 
+  // The status-bar menu picks a rung directly instead of walking the ladder.
+  const zoomTo = useCallback((percent: number) => {
+    const id = activeIdRef.current;
+    if (!id) return;
+    const handle = handles.current.get(id);
+    if (!handle) return;
+    handle.setZoom(percent);
+    setZoom(handle.getZoom() / 100);
+  }, []);
+
+  // "页宽" is the adaptive scale, not a pinned percentage.
+  const zoomFit = useCallback(() => {
+    const id = activeIdRef.current;
+    if (!id) return;
+    const handle = handles.current.get(id);
+    if (!handle) return;
+    handle.resetZoom();
+    setZoom(handle.getZoom() / 100);
+  }, []);
+
   // Undecorated windows lose the native menu, so the shortcuts it would have
   // owned are registered here instead.
   useEffect(() => {
@@ -338,10 +358,7 @@ export default function App() {
         case "Digit0":
         case "Numpad0":
           event.preventDefault();
-          if (id) {
-            handles.current.get(id)?.resetZoom();
-            setZoom(1);
-          }
+          if (id) zoomFit();
           break;
         default:
           break;
@@ -350,7 +367,18 @@ export default function App() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [handleNew, handleOpen, requestClose, saveTab, zoomBy]);
+  }, [handleNew, handleOpen, requestClose, saveTab, zoomBy, zoomFit]);
+
+  // Ctrl + wheel zooms the document (handled by the editor surface). The webview
+  // would otherwise scale the whole shell — toolbar, sidebar and status bar
+  // included — so the browser's own page zoom is cancelled everywhere.
+  useEffect(() => {
+    const onWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || event.metaKey) event.preventDefault();
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, []);
 
   // Dropping a file anywhere on the window opens it, which is the fastest path
   // into the app and avoids a trip through the file dialog.
@@ -525,7 +553,11 @@ export default function App() {
                       }}
                       onDirty={() => patchTab(tab.id, { dirty: true })}
                       onError={(message) => pushToast("error", message)}
-                      onZoomChange={setZoom}
+                      // Background tabs keep their editors mounted; only the
+                      // document on screen may own the status-bar readout.
+                      onZoomChange={(value) => {
+                        if (tab.id === activeIdRef.current) setZoom(value);
+                      }}
                       onSave={() => void saveTab(tab.id)}
                     />
                   ) : (
@@ -545,6 +577,10 @@ export default function App() {
         persisted={statusTab?.path != null}
         saving={statusTab?.saving ?? false}
         zoom={zoom}
+        onZoomIn={() => zoomBy(1)}
+        onZoomOut={() => zoomBy(-1)}
+        onZoomTo={zoomTo}
+        onZoomFit={zoomFit}
         hint={recent.length > 0 ? "Ctrl + O 打开文档" : "就绪"}
       />
 

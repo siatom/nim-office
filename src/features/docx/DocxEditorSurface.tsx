@@ -19,7 +19,7 @@ import { FontSizePicker } from "./FontSizePicker";
 import { FindReplacePanel } from "./FindReplacePanel";
 import ParagraphDialog from "./ParagraphDialog";
 import { ParagraphStylePickerContent } from "./ParagraphStylePicker";
-import { createDocxEngine, FIT_ZOOM_MODE } from "./engine";
+import { createDocxEngine, FIT_ZOOM_MODE, nudgeZoom } from "./engine";
 import { systemFontResolver } from "./system-fonts";
 import type { DocxSurfaceProps } from "./types";
 
@@ -63,6 +63,13 @@ const NARROW_VIEWPORT = 720;
 const NARROW_PANE_WIDTH = 260;
 /** Long enough for the pane's slide to finish before the page is re-fitted. */
 const PANE_SETTLE_MS = 240;
+/**
+ * A wheel notch arrives as one event but a trackpad reports dozens per gesture,
+ * so the wheel nudges the scale at most this often.
+ */
+const WHEEL_ZOOM_INTERVAL_MS = 80;
+/** Percentage points per wheel notch, matching Word's Ctrl + wheel. */
+const WHEEL_ZOOM_STEP = 10;
 /**
  * The engine returns a few refusal reasons as English prose that its locale
  * catalogue does not key. Translate the ones reachable from this toolbar;
@@ -148,6 +155,9 @@ export default function DocxEditorSurface({
     // Pinning the scale first makes the engine measure the latest available width.
     editor.setZoomMode({ type: "fixed" });
     editor.setZoomMode(FIT_ZOOM_MODE);
+    // The fit lands after a layout pass, which the zoom subscription can miss;
+    // report it here so the status bar never sits on a stale 100%.
+    propsRef.current.onZoomChange(editor.getZoom());
   }, [outlineOpen]);
 
   const scheduleRefit = useCallback(() => {
@@ -188,6 +198,29 @@ export default function DocxEditorSurface({
     observer.observe(host);
     return () => observer.disconnect();
   }, [scheduleRefit]);
+
+  // Ctrl + wheel is how Word (and every browser) zooms, and the webview would
+  // otherwise scale the whole shell — toolbar and status bar included. Intercept
+  // it over the editor and step the page scale instead.
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    let lastStep = 0;
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      // The listener is non-passive precisely so this can stop the webview zoom.
+      event.preventDefault();
+      if (event.deltaY === 0) return;
+      const editor = editorRef.current;
+      if (!editor) return;
+      const now = performance.now();
+      if (now - lastStep < WHEEL_ZOOM_INTERVAL_MS) return;
+      lastStep = now;
+      nudgeZoom(editor, event.deltaY < 0 ? WHEEL_ZOOM_STEP : -WHEEL_ZOOM_STEP);
+    };
+    host.addEventListener("wheel", onWheel, { passive: false });
+    return () => host.removeEventListener("wheel", onWheel);
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -284,6 +317,9 @@ export default function DocxEditorSurface({
             {/* No Pro review module is installed, so the comment/tracked-change
                 group would only render a disabled control. */}
             <DocxEditor.Toolbar.Group id="review" hidden />
+            {/* Zoom lives in the status bar, next to the other document
+                readouts, so the packaged group would duplicate it. */}
+            <DocxEditor.Toolbar.Group id="zoom" hidden />
             {/* The packaged picker has no CJK category; this one groups the
                 Chinese faces under 中文字体 and keeps a search box. */}
             <DocxEditor.Toolbar.FontFamily>

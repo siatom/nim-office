@@ -62,6 +62,10 @@ const OUTLINE_KEY = "one-office.outline";
  */
 const NARROW_VIEWPORT = 720;
 const NARROW_PANE_WIDTH = 260;
+/** Long enough for the pane's slide to finish before the page is re-fitted. */
+const PANE_SETTLE_MS = 240;
+/** The element the engine pads to make room for the pane. */
+const SCROLLER = ".docx-editor__scroll-container";
 
 /**
  * The engine returns a few refusal reasons as English prose that its locale
@@ -137,11 +141,33 @@ export default function DocxEditorSurface({
   );
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<Editor | null>(null);
   const [paneWidth, setPaneWidth] = useState(NAVIGATION_PANE_WIDTH);
 
   useEffect(() => {
     localStorage.setItem(OUTLINE_KEY, outlineOpen ? "open" : "closed");
   }, [outlineOpen]);
+
+  // Opening or closing the pane changes the width the page is fitted to, but the
+  // engine only re-fits on a viewport resize — its reservation is padding, not a
+  // size change. Once the pane's slide settles, drop a leftover reservation and
+  // re-apply the fit, so closing the pane widens and re-centres the page instead
+  // of leaving the narrow one sitting beside an empty strip.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const scroller = hostRef.current?.querySelector<HTMLElement>(SCROLLER);
+      if (!outlineOpen && scroller && parseFloat(getComputedStyle(scroller).paddingLeft) > 0) {
+        scroller.style.paddingLeft = "0px";
+      }
+      const editor = editorRef.current;
+      if (!editor || editor.getZoomMode().type !== "fit") return;
+      // Pinning the scale first is what makes the fit measure the room again: the
+      // same mode back-to-back reports "unchanged" and keeps the stale width.
+      editor.setZoomMode({ type: "fixed" });
+      editor.setZoomMode(FIT_ZOOM_MODE);
+    }, PANE_SETTLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [outlineOpen, paneWidth]);
 
   // The engine covers the page with the pane when the viewport cannot hold both,
   // so a narrow window gets a narrower pane instead of a half-hidden document.
@@ -203,6 +229,7 @@ export default function DocxEditorSurface({
   const handleReady = useCallback((editor: Editor) => {
     if (readyRef.current) return;
     readyRef.current = true;
+    editorRef.current = editor;
     setLoading(false);
     propsRef.current.onReady(createDocxEngine(editor));
     propsRef.current.onZoomChange(editor.getZoom());

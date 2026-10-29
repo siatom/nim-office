@@ -27,6 +27,14 @@ const decodedFiles = new Map<string, Uint8Array>();
 const admittedSources = new Map<string, FontSource>();
 
 /**
+ * Chinese government documents standardize on these faces, but the GB2312 cuts
+ * and Founder's title face are not part of a stock OS install. Listing them as
+ * supported makes them selectable in the editor's font picker; the Rust side
+ * maps each name onto the closest installed face when the exact file is absent.
+ */
+const GOVERNMENT_FAMILIES = ["仿宋_GB2312", "楷体_GB2312", "方正小标宋简体"];
+
+/**
  * Supplies the bytes of fonts installed on this machine so HarfBuzz can measure
  * and paginate the way Word does. Only families the document actually names are
  * requested; a missing font resolves to nothing and keeps the canvas fallback.
@@ -82,5 +90,8 @@ export const systemFontResolver: FontResolver = async (request) => {
     }
   }
 
-  return { sources, supportedFamilies: families };
+  return {
+    sources,
+    supportedFamilies: Array.from(new Set([...families, ...GOVERNMENT_FAMILIES])),
+  };
 };

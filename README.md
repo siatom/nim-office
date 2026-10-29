@@ -77,7 +77,7 @@ src-tauri/                 Rust backend
 src/
   App.tsx                  Tab workspace, open/save/close orchestration, shortcuts
   components/              Title bar, sidebar, tab bar, status bar, dialogs, toasts
-  features/docx/           docx-editor mount, engine adapter, lifecycle, export
+  features/docx/           lazy docx-editor mount, engine adapter, system fonts
   lib/accents.ts           Accent presets and contrast-safe ink for custom colours
   lib/ipc.ts               Typed wrappers around invoke()
 ```
@@ -105,10 +105,11 @@ Requires Node 20+, Rust 1.77+, and the platform Tauri prerequisites.
 
 ## Bundle size
 
-The Rust binary stays small, and the docx-editor engine keeps the frontend to roughly
-5 MB of JS (~1.5 MB gzipped) plus a 420 KB HarfBuzz WASM module (~176 KB gzipped). That is
-still the dominant cost of DOCX fidelity, but a fraction of the previous engine. Code
-splitting the editor behind a dynamic import is an open follow-up.
+The editor is loaded on demand. The shell paints from a ~250 KB chunk (~78 KB gzipped);
+the editor chunk (~4.6 MB, ~1.39 MB gzipped) and the 420 KB HarfBuzz WASM (~176 KB gzipped)
+arrive when the first document tab mounts. CJK font files are read from the operating system
+on demand (SimSun's TTC is ~17 MB), so Word-compatible measurement costs no bundle size; the
+per-face shaping ceiling is raised to 64 MB to admit those collections.
 
 ## License
 

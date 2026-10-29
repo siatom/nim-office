@@ -1,6 +1,7 @@
 mod commands;
 mod document;
 mod error;
+mod fonts;
 mod recent;
 
 #[cfg(target_os = "macos")]
@@ -30,6 +31,7 @@ pub fn run() {
             commands::remove_recent,
             commands::clear_recent,
             commands::path_exists,
+            fonts::load_system_fonts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

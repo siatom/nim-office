@@ -358,6 +358,10 @@
   --docx-nav-shift: 0px !important;
 }
 
+.docx-editor .oo-docx-viewport--with-outline {
+  --docx-nav-shift: var(--oo-outline-shift) !important;
+}
+
 /* Unit picker inside the Paragraph dialog's measurement rows. It sits where the
    packaged controls put their static unit label, so it reads as a label that
    happens to be editable rather than as a second input. */

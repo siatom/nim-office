@@ -129,6 +129,33 @@ function OpenFailureWatcher({ onFailure }: { onFailure: (message: string) => voi
   return null;
 }
 
+/** Adds subtle page-corner marks to every rendered sheet. */
+function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | null } }) {
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const addMarks = () => {
+      for (const page of host.querySelectorAll<HTMLElement>(".docx-page")) {
+        if (page.querySelector(":scope > .oo-page-corner-marks")) continue;
+        const marks = page.ownerDocument.createElement("div");
+        marks.className = "oo-page-corner-marks";
+        marks.setAttribute("aria-hidden", "true");
+        for (const corner of ["top-left", "top-right", "bottom-left", "bottom-right"]) {
+          const mark = page.ownerDocument.createElement("span");
+          mark.className = `oo-page-corner-mark oo-page-corner-mark--${corner}`;
+          marks.append(mark);
+        }
+        page.append(marks);
+      }
+    };
+    addMarks();
+    const observer = new MutationObserver(addMarks);
+    observer.observe(host, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [hostRef]);
+  return null;
+}
+
 export default function DocxEditorSurface({
   bytes,
   colorMode,
@@ -428,6 +455,7 @@ export default function DocxEditorSurface({
             onDirty={onDirty}
           />
           <DocxEditor.HorizontalRuler unit="cm" />
+          <PageCornerMarks hostRef={hostRef} />
           <div className="relative flex min-h-0 flex-1">
             {/* Headings, find and go-to over the left gutter. The toolbar action is
                 the entry point, so the engine's floating disc is suppressed. The tab

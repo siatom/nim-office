@@ -1,5 +1,53 @@
 @import "tailwindcss";
 
+.docx-editor .docx-page {
+  position: relative;
+}
+
+.oo-page-corner-marks {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.oo-page-corner-mark {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: rgb(113 113 122 / 45%);
+  border-style: solid;
+  border-width: 0;
+}
+
+.oo-page-corner-mark--top-left {
+  top: 8px;
+  left: 8px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.oo-page-corner-mark--top-right {
+  top: 8px;
+  right: 8px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.oo-page-corner-mark--bottom-left {
+  bottom: 8px;
+  left: 8px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.oo-page-corner-mark--bottom-right {
+  right: 8px;
+  bottom: 8px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

@@ -59,6 +59,19 @@ const THEME_VARS = {
 type HeaderFooterEditing = "header" | "footer" | null;
 
 /**
+ * The parts of "第 X 页，共 Y 页". The engine's own `PAGE_X_OF_Y` joins the two
+ * fields with a literal " of ", so the separator has to be written here.
+ */
+type PageFieldStep = { text: string } | { field: "PAGE" | "NUMPAGES" };
+const PAGE_X_OF_Y_ZH: readonly PageFieldStep[] = [
+  { text: "第 " },
+  { field: "PAGE" },
+  { text: " 页，共 " },
+  { field: "NUMPAGES" },
+  { text: " 页" },
+];
+
+/**
  * CJK collections are large (SimSun's TTC is ~17 MB) and the shaping ceiling
  * defaults to 16 MiB, which would silently fall back for Chinese documents.
  */
@@ -292,7 +305,12 @@ export default function DocxEditorSurface({
   const editHeaderFooter = useCallback((position: "header" | "footer") => {
     const editor = editorRef.current;
     if (!editor) return;
-    editor.exec({ type: "editHeaderFooter", position });
+    const result = editor.exec({ type: "editHeaderFooter", position });
+    // A story that had to be materialised is empty and starts centred, as in
+    // Word; entering one that already exists leaves its alignment alone.
+    if (result.ok && result.changed) {
+      editor.exec({ type: "setAlignment", align: "center" });
+    }
     editor.focus();
   }, []);
   const exitHeaderFooter = useCallback(() => {
@@ -304,7 +322,26 @@ export default function DocxEditorSurface({
   const insertPageField = useCallback((field: "PAGE" | "PAGE_X_OF_Y") => {
     const editor = editorRef.current;
     if (!editor) return;
-    editor.exec({ type: "insertPageField", field });
+    if (field === "PAGE") {
+      editor.exec({ type: "insertPageField", field: "PAGE" });
+      editor.focus();
+      return;
+    }
+    // The engine hard-codes " of " between the two fields, so `PAGE_X_OF_Y`
+    // reads "1 of 3" in a Chinese document. Write the same parts by hand.
+    // They cannot share one history group — `insertText` and `insertPageField`
+    // both refuse a group handle — so the run undoes one part at a time.
+    for (const step of PAGE_X_OF_Y_ZH) {
+      const result =
+        "text" in step
+          ? // `insertText` always writes at the selection; the typed signature
+            // still asks for a `target`, which the engine rejects at runtime.
+            editor.exec(
+              { type: "insertText", text: step.text } as unknown as Parameters<Editor["exec"]>[0],
+            )
+          : editor.exec({ type: "insertPageField", field: step.field });
+      if (!result.ok) break;
+    }
     editor.focus();
   }, []);
   const toggleParagraphMarks = useCallback(() => {

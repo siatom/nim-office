@@ -1,4 +1,5 @@
 import type { Editor } from "@docx-editor.dev/react";
+import type { ZoomMode } from "@docx-editor.dev/core";
 
 /**
  * The surface the app depends on, independent of the document engine behind it.
@@ -22,6 +23,19 @@ export interface DocxEngineHandle {
 /** Zoom ladder shared by the shortcuts and the status-bar readout. */
 export const ZOOM_STEPS = [50, 67, 75, 90, 100, 110, 125, 150, 175, 200];
 
+/**
+ * The resting scale: the page fills the width left beside the navigation pane and
+ * follows the window from there. The packaged default stops shrinking at 50%,
+ * which leaves a page wider than a narrow window clipped at the right edge, so the
+ * floor sits low enough that the whole sheet stays visible.
+ */
+export const FIT_ZOOM_MODE: ZoomMode = {
+  type: "fit",
+  fit: "pageWidth",
+  minZoom: 0.3,
+  maxZoom: 1,
+};
+
 /** Adapts a docx-editor `Editor` instance to the app's engine contract. */
 export function createDocxEngine(editor: Editor): DocxEngineHandle {
   const currentPercent = () => Math.round(editor.getZoom() * 100);
@@ -41,6 +55,7 @@ export function createDocxEngine(editor: Editor): DocxEngineHandle {
     setZoom: (percent) => editor.setZoom(percent / 100),
     zoomIn: () => step(1),
     zoomOut: () => step(-1),
-    resetZoom: () => editor.setZoom(1),
+    // Back to the adaptive scale rather than a pinned 100%: the window decides.
+    resetZoom: () => editor.setZoomMode(FIT_ZOOM_MODE),
   };
 }

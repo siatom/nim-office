@@ -183,6 +183,19 @@
   background: var(--bg);
 }
 
+/* Keep Word's layout glyphs readable without competing with document text. */
+.docx-editor .docx-show-paragraph-marks .docx-paragraph-mark {
+  color: var(--text-subtle);
+  fill: currentColor;
+  opacity: 0.46;
+  pointer-events: none;
+}
+
+.docx-editor .docx-show-paragraph-marks .docx-paragraph-mark :is(path, line, polyline) {
+  stroke: currentColor;
+  stroke-width: 1.25px;
+}
+
 /* Give the editor controls the same quiet, tactile surfaces as the host chrome. */
 .docx-editor .oo-toolbar {
   min-height: 40px;

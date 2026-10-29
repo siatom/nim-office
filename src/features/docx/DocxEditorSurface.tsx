@@ -301,20 +301,22 @@ export default function DocxEditorSurface({
             {/* Headings, find and go-to over the left gutter. The toolbar action is
                 the entry point, so the engine's floating disc is suppressed. The tab
                 is controlled so the custom Find panel knows when it is showing. */}
-            <DocxEditor.Navigation
-              open={outlineOpen}
-              onOpenChange={setOutlineOpen}
-              tab={outlineTab}
-              onTabChange={setOutlineTab}
-              toggle={false}
-              paneWidth={paneWidth}
-            >
-              <DocxEditor.Navigation.Header />
-              <DocxEditor.Navigation.Tabs />
-              <DocxEditor.Navigation.Headings />
-              <FindReplacePanel active={outlineTab === "find"} open={outlineOpen} />
-              <DocxEditor.Navigation.GoTo />
-            </DocxEditor.Navigation>
+            {outlineOpen && (
+              <DocxEditor.Navigation
+                open
+                onOpenChange={setOutlineOpen}
+                tab={outlineTab}
+                onTabChange={setOutlineTab}
+                toggle={false}
+                paneWidth={paneWidth}
+              >
+                <DocxEditor.Navigation.Header />
+                <DocxEditor.Navigation.Tabs />
+                <DocxEditor.Navigation.Headings />
+                <FindReplacePanel active={outlineTab === "find"} open />
+                <DocxEditor.Navigation.GoTo />
+              </DocxEditor.Navigation>
+            )}
             <DocxEditor.Viewport
               className={outlineOpen ? undefined : "oo-docx-viewport--no-outline"}
               style={{ flex: 1, minHeight: 0 }}

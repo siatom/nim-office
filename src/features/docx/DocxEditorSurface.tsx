@@ -18,6 +18,7 @@ import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
 import { FindReplacePanel } from "./FindReplacePanel";
 import ParagraphDialog from "./ParagraphDialog";
+import { ParagraphStylePickerContent } from "./ParagraphStylePicker";
 import { createDocxEngine, FIT_ZOOM_MODE } from "./engine";
 import { systemFontResolver } from "./system-fonts";
 import type { DocxSurfaceProps } from "./types";
@@ -294,6 +295,9 @@ export default function DocxEditorSurface({
             <DocxEditor.Toolbar.Slot slotId="font.size">
               <FontSizePicker />
             </DocxEditor.Toolbar.Slot>
+            <DocxEditor.Toolbar.StylePicker>
+              <ParagraphStylePickerContent />
+            </DocxEditor.Toolbar.StylePicker>
             <DocxEditor.Toolbar.Action
               label="文档结构图"
               icon={<ListTree size={18} strokeWidth={1.8} />}

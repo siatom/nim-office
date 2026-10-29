@@ -17,6 +17,7 @@ interface SystemFontFace {
 }
 
 interface SystemFontPayload {
+  platform: string;
   files: SystemFontFile[];
   faces: SystemFontFace[];
 }
@@ -27,23 +28,66 @@ const decodedFiles = new Map<string, Uint8Array>();
 const admittedSources = new Map<string, FontSource>();
 
 /**
- * Families offered in the picker before a document names them. The first six
- * are the usual Chinese office set; the GB2312 cuts and Founder's title face
- * are not part of a stock OS install, so the Rust side maps them onto the
- * closest installed face when the exact file is absent.
+ * Families offered in the picker before a document names them. The GB2312 cuts
+ * and Founder's title face are not part of a stock OS install, so the Rust side
+ * maps them onto the closest installed face when the exact file is absent.
+ * Platform-only faces are added below so Windows never advertises Apple's
+ * bundled families (and vice versa).
  */
-export const CHINESE_FAMILIES = [
+const COMMON_CHINESE_FAMILIES = [
+  "宋体",
+  "黑体",
+  "楷体",
+  "仿宋",
+  "华文中宋",
+  "仿宋_GB2312",
+  "楷体_GB2312",
+  "方正小标宋简体",
+];
+
+const WINDOWS_CHINESE_FAMILIES = ["微软雅黑", "等线"];
+
+/** macOS fonts, including the 华文 faces bundled with the system and Office. */
+const MACOS_CHINESE_FAMILIES = [
+  "苹方",
+  "华文宋体",
+  "华文黑体",
+  "华文楷体",
+  "华文仿宋",
+  "华文细黑",
+  "冬青黑体简体中文",
+];
+
+/** Stable display order for the 中文字体 group, independent of platform. */
+export const CHINESE_FAMILY_ORDER = [
   "宋体",
   "黑体",
   "楷体",
   "仿宋",
   "微软雅黑",
   "等线",
+  "苹方",
+  "华文宋体",
+  "华文黑体",
+  "华文楷体",
+  "华文仿宋",
+  "华文细黑",
+  "冬青黑体简体中文",
   "华文中宋",
   "仿宋_GB2312",
   "楷体_GB2312",
   "方正小标宋简体",
-] as const;
+];
+
+function pickerFamilies(platform: string): string[] {
+  const platformFamilies =
+    platform === "macos"
+      ? MACOS_CHINESE_FAMILIES
+      : platform === "windows"
+        ? WINDOWS_CHINESE_FAMILIES
+        : [];
+  return [...COMMON_CHINESE_FAMILIES, ...platformFamilies];
+}
 
 /**
  * Supplies the bytes of fonts installed on this machine so HarfBuzz can measure
@@ -103,6 +147,8 @@ export const systemFontResolver: FontResolver = async (request) => {
 
   return {
     sources,
-    supportedFamilies: Array.from(new Set([...families, ...CHINESE_FAMILIES])),
+    supportedFamilies: Array.from(
+      new Set([...families, ...pickerFamilies(payload.platform)]),
+    ),
   };
 };

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DocxEditor, useFontFamily } from "@docx-editor.dev/react";
 
-import { CHINESE_FAMILIES } from "./system-fonts";
+import { CHINESE_FAMILY_ORDER } from "./system-fonts";
 
 /**
  * Word's font picker separates CJK faces from Latin ones, but the packaged
@@ -35,6 +35,13 @@ const CHINESE_ALIASES = new Set([
   "zhongsong",
   "pingfang",
   "pingfangsc",
+  "stsong",
+  "stsongti",
+  "stxihei",
+  "xihei",
+  "hiraginosansgb",
+  "hiraginosansgbw3",
+  "hiraginosansgbw6",
   "sourcehansanssc",
   "notosanssc",
   "notosanscjksc",
@@ -67,7 +74,7 @@ function isChineseFamily(family: string): boolean {
 
 function sortChinese(fonts: string[]): string[] {
   const preferred = new Map<string, number>(
-    CHINESE_FAMILIES.map((name, index) => [name, index] as const),
+    CHINESE_FAMILY_ORDER.map((name, index) => [name, index] as const),
   );
   return [...fonts].sort((left, right) => {
     const leftIndex = preferred.get(left) ?? Infinity;

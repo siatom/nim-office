@@ -12,12 +12,13 @@ import { EmptyState } from "./components/EmptyState";
 import { DropOverlay } from "./components/DropOverlay";
 import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
-import { DocxView } from "./features/docx/DocxView";
+import { DocxLoadingState, DocxView } from "./features/docx/DocxView";
 import type { DocxEngineHandle } from "./features/docx/engine";
 import { useTheme } from "./hooks/useTheme";
 import { useAccent } from "./hooks/useAccent";
 import { base64ToBytes } from "./lib/base64";
 import {
+  describeDocument,
   listRecent,
   pushRecent,
   readDocument,
@@ -33,8 +34,11 @@ interface DocTab {
   path: string | null;
   name: string;
   kind: DocumentKind;
-  data: Uint8Array;
+  /** Absent while the file is still being read off the native side. */
+  data: Uint8Array | null;
   size: number;
+  opening: boolean;
+  openError: string | null;
   dirty: boolean;
   saving: boolean;
 }
@@ -133,33 +137,51 @@ export default function App() {
         }
 
         try {
-          const payload = await readDocument(path);
-          if (!SUPPORTED.includes(payload.kind)) {
-            pushToast("info", `${KIND_LABEL[payload.kind]}暂不支持编辑，将在后续版本中提供`);
+          // `describeDocument` only stats the file. In particular, it does not
+          // Base64-encode a large DOCX before React can paint the new tab.
+          const summary = await describeDocument(path);
+          if (!SUPPORTED.includes(summary.kind)) {
+            pushToast("info", `${KIND_LABEL[summary.kind]}暂不支持编辑，将在后续版本中提供`);
             continue;
           }
 
           const id = crypto.randomUUID();
           const tab: DocTab = {
             id,
-            path: payload.path,
-            name: payload.name,
-            kind: payload.kind,
-            data: base64ToBytes(payload.data),
-            size: payload.size,
+            path: summary.path,
+            name: summary.name,
+            kind: summary.kind,
+            data: null,
+            size: summary.size,
+            opening: true,
+            openError: null,
             dirty: false,
             saving: false,
           };
           setTabs((prev) => [...prev, tab]);
           setActiveId(id);
           setWelcomeOpen(false);
-          setRecent(await pushRecent(path));
+          // Let React commit the selected tab before the expensive payload
+          // arrives. This keeps a 400 MB file from making "Open" feel inert.
+          void readDocument(path)
+            .then((payload) => {
+              patchTab(id, {
+                data: base64ToBytes(payload.data),
+                opening: false,
+              });
+            })
+            .catch((error) => {
+              const message = errorMessage(error);
+              patchTab(id, { opening: false, openError: message });
+              pushToast("error", message);
+            });
+          void pushRecent(path).then(setRecent).catch(() => undefined);
         } catch (error) {
           pushToast("error", errorMessage(error));
         }
       }
     },
-    [pushToast],
+    [patchTab, pushToast],
   );
 
   const handleOpen = useCallback(async () => {
@@ -190,6 +212,8 @@ export default function App() {
         kind: "docx",
         data: new Uint8Array(),
         size: 0,
+        opening: false,
+        openError: null,
         dirty: false,
         saving: false,
       },
@@ -492,17 +516,21 @@ export default function App() {
                     (showWelcome || tab.id !== activeId) && "hidden",
                   )}
                 >
-                  <DocxView
-                    bytes={tab.data}
-                    colorMode={isDark ? "dark" : "light"}
-                    onReady={(handle) => {
-                      handles.current.set(tab.id, handle);
-                    }}
-                    onDirty={() => patchTab(tab.id, { dirty: true })}
-                    onError={(message) => pushToast("error", message)}
-                    onZoomChange={setZoom}
-                    onSave={() => void saveTab(tab.id)}
-                  />
+                  {tab.data ? (
+                    <DocxView
+                      bytes={tab.data}
+                      colorMode={isDark ? "dark" : "light"}
+                      onReady={(handle) => {
+                        handles.current.set(tab.id, handle);
+                      }}
+                      onDirty={() => patchTab(tab.id, { dirty: true })}
+                      onError={(message) => pushToast("error", message)}
+                      onZoomChange={setZoom}
+                      onSave={() => void saveTab(tab.id)}
+                    />
+                  ) : (
+                    <DocxLoadingState error={tab.openError} />
+                  )}
                 </div>
               ))}
           </div>

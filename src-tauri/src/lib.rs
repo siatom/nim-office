@@ -57,6 +57,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::read_document,
+            commands::describe_document,
             commands::write_document,
             commands::list_recent,
             commands::push_recent,

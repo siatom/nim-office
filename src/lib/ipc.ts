@@ -3,12 +3,15 @@ import { bytesToBase64 } from "./base64";
 
 export type DocumentKind = "docx" | "xlsx" | "pptx" | "pdf" | "unknown";
 
-export interface DocumentPayload {
+export interface DocumentSummary {
   path: string;
   name: string;
   kind: DocumentKind;
   size: number;
   modified: number | null;
+}
+
+export interface DocumentPayload extends DocumentSummary {
   data: string;
 }
 
@@ -21,6 +24,11 @@ export interface RecentEntry {
 
 export function readDocument(path: string) {
   return invoke<DocumentPayload>("read_document", { path });
+}
+
+/** Fast metadata-only probe used to paint a document tab before large-file I/O begins. */
+export function describeDocument(path: string) {
+  return invoke<DocumentSummary>("describe_document", { path });
 }
 
 export function writeDocument(path: string, bytes: Uint8Array) {

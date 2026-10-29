@@ -10,12 +10,21 @@ import type { DocxSurfaceProps } from "./types";
  */
 const Surface = lazy(() => import("./DocxEditorSurface"));
 
-function Loading() {
+export function DocxLoadingState({ error }: { error?: string | null }) {
   return (
     <div className="grid h-full place-items-center bg-bg">
       <div className="flex flex-col items-center gap-3 text-ink-muted">
-        <Loader2 size={22} className="animate-spin text-accent" />
-        <span className="text-[12px]">正在打开文档…</span>
+        {error ? (
+          <>
+            <span className="text-[13px] font-medium text-ink">无法打开这个文档</span>
+            <span className="max-w-[420px] text-center text-[12px] leading-relaxed">{error}</span>
+          </>
+        ) : (
+          <>
+            <Loader2 size={22} className="animate-spin text-accent" />
+            <span className="text-[12px]">正在读取文档…</span>
+          </>
+        )}
       </div>
     </div>
   );
@@ -23,7 +32,7 @@ function Loading() {
 
 export function DocxView(props: DocxSurfaceProps) {
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<DocxLoadingState />}>
       <Surface {...props} />
     </Suspense>
   );

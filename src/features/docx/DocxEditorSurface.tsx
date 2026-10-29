@@ -194,6 +194,80 @@ function FootnoteIcon() {
   );
 }
 
+function syncNegativeVerticalTicks(verticalRuler: HTMLElement, tickLayer: HTMLElement, topMarginOffset: number) {
+  let overlay = verticalRuler.querySelector<HTMLElement>(":scope > .oo-vertical-ruler-negative-ticks");
+  if (!overlay) {
+    overlay = verticalRuler.ownerDocument.createElement("div");
+    overlay.className = "oo-vertical-ruler-negative-ticks";
+    overlay.setAttribute("aria-hidden", "true");
+    Object.assign(overlay.style, {
+      position: "absolute",
+      top: "0",
+      insetInlineStart: "0",
+      insetInlineEnd: "0",
+      pointerEvents: "none",
+      overflow: "hidden",
+    });
+    verticalRuler.append(overlay);
+  }
+
+  const positions = [...tickLayer.children]
+    .filter((node): node is HTMLElement => node instanceof HTMLElement)
+    .map((node) => Number.parseFloat(node.style.top))
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b)
+    .filter((position, index, values) => index === 0 || position - values[index - 1] > 0.1);
+  const step = positions.length > 1 ? positions[1] - positions[0] : 0;
+  if (step <= 0) return;
+
+  const nodesByIndex = new Map<number, HTMLElement[]>();
+  for (const node of [...tickLayer.children]) {
+    if (!(node instanceof HTMLElement)) continue;
+    const position = Number.parseFloat(node.style.top);
+    if (!Number.isFinite(position)) continue;
+    const index = Math.round((position - positions[0]) / step);
+    const group = nodesByIndex.get(index) ?? [];
+    group.push(node);
+    nodesByIndex.set(index, group);
+  }
+
+  const labeledPositions = [...nodesByIndex.entries()]
+    .filter(([, nodes]) => nodes.some((node) => node.textContent?.trim()))
+    .map(([index]) => index)
+    .filter((index) => index > 0)
+    .sort((a, b) => a - b);
+  const majorStep = labeledPositions[0] ?? 10;
+  const signature = `${topMarginOffset.toFixed(1)}:${verticalRuler.clientHeight}:${tickLayer.childElementCount}:${step.toFixed(2)}:${majorStep}`;
+  if (overlay.dataset.signature === signature) return;
+
+  overlay.dataset.signature = signature;
+  overlay.replaceChildren();
+  overlay.style.height = `${topMarginOffset}px`;
+  for (let index = 1; index * step <= topMarginOffset + 0.1; index += 1) {
+    const distance = index * step;
+    const sourceNodes = nodesByIndex.get(index) ?? [];
+    const sourceLine = sourceNodes.find((node) => node.style.height === "1px" && node.style.width);
+    const tick = verticalRuler.ownerDocument.createElement("div");
+    Object.assign(tick.style, {
+      position: "absolute",
+      top: `${topMarginOffset - distance}px`,
+      insetInlineEnd: "0",
+      height: "1px",
+      width: sourceLine?.style.width ?? (index % majorStep === 0 ? "10px" : index % (majorStep / 2) === 0 ? "6px" : "3px"),
+      backgroundColor: sourceLine?.style.backgroundColor || "var(--doc-text-subtle)",
+    });
+    overlay.append(tick);
+
+    const sourceLabel = sourceNodes.find((node) => node.textContent?.trim());
+    if (sourceLabel) {
+      const label = sourceLabel.cloneNode(true) as HTMLElement;
+      label.style.top = `${topMarginOffset - distance}px`;
+      label.textContent = `-${sourceLabel.textContent?.trim()}`;
+      overlay.append(label);
+    }
+  }
+}
+
 /** Adds subtle page-corner marks to every rendered sheet. */
 function PageCornerMarks({ hostRef }: { hostRef: { current: HTMLDivElement | null } }) {
   useEffect(() => {
@@ -585,19 +659,24 @@ export default function DocxEditorSurface({
       const verticalRect = verticalRuler.getBoundingClientRect();
       const verticalTicks = verticalRuler.firstElementChild;
       if (verticalTicks instanceof HTMLElement) {
-        verticalTicks.style.transform = `translateY(${(contentRect?.top ?? focusedRect.top) - focusedRect.top}px)`;
+        const topMarginOffset = Math.max(0, (contentRect?.top ?? focusedRect.top) - focusedRect.top);
+        Object.assign(verticalTicks.style, {
+          transform: `translateY(${topMarginOffset}px)`,
+          bottom: "auto",
+          height: `${Math.max(0, verticalRuler.clientHeight - topMarginOffset)}px`,
+          overflow: "hidden",
+        });
+        syncNegativeVerticalTicks(verticalRuler, verticalTicks, topMarginOffset);
       }
       const horizontalX = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-horizontal-x")) || 0;
       const verticalY = Number.parseFloat(host.style.getPropertyValue("--oo-focused-ruler-vertical-y")) || 0;
-      const rulerGap = 24;
-
       host.style.setProperty(
         "--oo-focused-ruler-horizontal-x",
         `${horizontalX + focusedRect.left - horizontalRect.left}px`,
       );
       host.style.setProperty(
         "--oo-focused-ruler-vertical-y",
-        `${verticalY + focusedRect.top - rulerGap - verticalRect.top}px`,
+        `${verticalY + focusedRect.top - verticalRect.top}px`,
       );
     };
     const scheduleSync = () => {

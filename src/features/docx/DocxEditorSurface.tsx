@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import {
   DocxEditor,
   LocaleProvider,
+  definePopup,
   useOpenFailure,
   useZoom,
   type Editor,
@@ -12,6 +13,7 @@ import { zhCN } from "@docx-editor.dev/i18n";
 import { ListTree, Loader2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
+import ParagraphDialog from "./ParagraphDialog";
 import { createDocxEngine } from "./engine";
 import { systemFontResolver } from "./system-fonts";
 import type { DocxSurfaceProps } from "./types";
@@ -67,6 +69,13 @@ const ENGINE_TITLES: Record<string, string> = {
   "comments and tracked changes require the pro review module (@docx-editor.dev/pro)":
     "批注和修订需要 Pro 模块（@docx-editor.dev/pro）",
 };
+
+/**
+ * The Paragraph dialog is the one popup the app replaces: its indent and
+ * spacing controls read in the writer's unit (磅/英寸/厘米/毫米/字符) instead of
+ * the packaged inches-only fields.
+ */
+const POPUPS = { paragraph: definePopup(ParagraphDialog) };
 
 /** Disabled reasons the context menu exposes to screen readers only. */
 const ENGINE_TEXT: Record<string, string> = {
@@ -193,6 +202,7 @@ export default function DocxEditorSurface({
     >
       <LocaleProvider i18n={zhCN}>
         <DocxEditor.Root
+          popups={POPUPS}
           document={initialDocument}
           mode="edit"
           locale="zh-CN"

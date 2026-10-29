@@ -29,7 +29,7 @@ function normalizeStyleName(value: string): string {
   return value.replace(/[\s_-]/g, "").toLowerCase();
 }
 
-function getDisplayName(styleId: string, name: string): string {
+export function getDisplayName(styleId: string, name: string): string {
   const normalizedId = normalizeStyleName(styleId);
   const normalizedName = normalizeStyleName(name);
   const headingNumber =

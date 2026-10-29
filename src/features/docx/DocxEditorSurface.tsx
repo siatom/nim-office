@@ -12,13 +12,14 @@ import {
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
 import { zhCN } from "@docx-editor.dev/i18n";
-import { ListTree, Loader2 } from "lucide-react";
+import { ListTree, Loader2, Settings2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
 import { FontSizePicker } from "./FontSizePicker";
 import { FindReplacePanel } from "./FindReplacePanel";
 import ParagraphDialog from "./ParagraphDialog";
 import { ParagraphStylePickerContent } from "./ParagraphStylePicker";
+import { ParagraphStyleManager } from "./ParagraphStyleManager";
 import { createDocxEngine, FIT_ZOOM_MODE } from "./engine";
 import { systemFontResolver } from "./system-fonts";
 import type { DocxSurfaceProps } from "./types";
@@ -136,6 +137,7 @@ export default function DocxEditorSurface({
   // preference makes the editor reserve its pane gutter before the pane is
   // visible, shifting the first page right on a restored window.
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [styleManagerOpen, setStyleManagerOpen] = useState(false);
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
@@ -299,12 +301,22 @@ export default function DocxEditorSurface({
               <ParagraphStylePickerContent />
             </DocxEditor.Toolbar.StylePicker>
             <DocxEditor.Toolbar.Action
+              label="管理段落样式"
+              icon={<Settings2 size={18} strokeWidth={1.8} />}
+              onSelect={() => setStyleManagerOpen(true)}
+            />
+            <DocxEditor.Toolbar.Action
               label="文档结构图"
               icon={<ListTree size={18} strokeWidth={1.8} />}
               active={outlineOpen}
               onSelect={() => setOutlineOpen((open) => !open)}
             />
           </DocxEditor.Toolbar>
+          <ParagraphStyleManager
+            open={styleManagerOpen}
+            onClose={() => setStyleManagerOpen(false)}
+            onDirty={onDirty}
+          />
           <div className="relative flex min-h-0 flex-1">
             {/* Headings, find and go-to over the left gutter. The toolbar action is
                 the entry point, so the engine's floating disc is suppressed. The tab

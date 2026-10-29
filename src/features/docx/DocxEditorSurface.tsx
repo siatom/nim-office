@@ -6,6 +6,7 @@ import {
   useOpenFailure,
   useZoom,
   type Editor,
+  type NavigationTabValue,
 } from "@docx-editor.dev/react";
 import type { DocumentChange } from "@docx-editor.dev/core";
 import "@docx-editor.dev/react/styles.css";
@@ -13,6 +14,7 @@ import { zhCN } from "@docx-editor.dev/i18n";
 import { ListTree, Loader2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
+import { FindReplacePanel } from "./FindReplacePanel";
 import ParagraphDialog from "./ParagraphDialog";
 import { createDocxEngine } from "./engine";
 import { systemFontResolver } from "./system-fonts";
@@ -125,6 +127,7 @@ export default function DocxEditorSurface({
   const [outlineOpen, setOutlineOpen] = useState(
     () => localStorage.getItem(OUTLINE_KEY) !== "closed",
   );
+  const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -236,13 +239,21 @@ export default function DocxEditorSurface({
           </DocxEditor.Toolbar>
           <div className="relative flex min-h-0 flex-1">
             {/* Headings, find and go-to over the left gutter. The toolbar action is
-                the entry point, so the engine's floating disc is suppressed. */}
+                the entry point, so the engine's floating disc is suppressed. The tab
+                is controlled so the custom Find panel knows when it is showing. */}
             <DocxEditor.Navigation
-              defaultTab="headings"
               open={outlineOpen}
               onOpenChange={setOutlineOpen}
+              tab={outlineTab}
+              onTabChange={setOutlineTab}
               toggle={false}
-            />
+            >
+              <DocxEditor.Navigation.Header />
+              <DocxEditor.Navigation.Tabs />
+              <DocxEditor.Navigation.Headings />
+              <FindReplacePanel active={outlineTab === "find"} open={outlineOpen} />
+              <DocxEditor.Navigation.GoTo />
+            </DocxEditor.Navigation>
             <DocxEditor.Viewport style={{ flex: 1, minHeight: 0 }}>
               <DocxEditor.Content />
               <DocxEditor.HyperLink />

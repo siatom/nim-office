@@ -434,7 +434,7 @@ export default function DocxEditorSurface({
     <div
       ref={hostRef}
       className={`docx-editor relative flex h-full min-h-0 flex-col${colorMode === "dark" ? " dark" : ""}`}
-      style={THEME_VARS}
+      style={{ ...THEME_VARS, "--oo-outline-shift": `${paneWidth + 48}px` } as CSSProperties}
     >
       <LocaleProvider i18n={zhCN}>
         <DocxEditor.Root
@@ -579,7 +579,7 @@ export default function DocxEditorSurface({
               </DocxEditor.Navigation>
             )}
             <DocxEditor.Viewport
-              className={outlineOpen ? undefined : "oo-docx-viewport--no-outline"}
+              className={outlineOpen ? "oo-docx-viewport--with-outline" : "oo-docx-viewport--no-outline"}
               style={{ flex: 1, minHeight: 0 }}
             >
               <DocxEditor.Content />

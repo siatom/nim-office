@@ -287,7 +287,7 @@ export default function DocxEditorSurface({
   const [outlineTab, setOutlineTab] = useState<NavigationTabValue>("headings");
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
-  const zoomModeRef = useRef<ZoomDisplayMode>("page-width");
+  const zoomModeRef = useRef<ZoomDisplayMode>("fixed");
   const multiPageRef = useRef(multiPage);
   multiPageRef.current = multiPage;
   const fitTimerRef = useRef<number | null>(null);
@@ -677,6 +677,11 @@ export default function DocxEditorSurface({
     if (readyRef.current) return;
     readyRef.current = true;
     editorRef.current = editor;
+    // Open every document at its authored scale; users can still choose a fit
+    // mode explicitly from the zoom controls.
+    editor.setZoomMode({ type: "fixed" });
+    editor.setZoom(1);
+    zoomModeRef.current = "fixed";
     // If the outline is hidden, remove its reserved gutter before revealing the
     // document so the first visible frame is centred in the full viewport.
     refitPage();
@@ -729,7 +734,7 @@ export default function DocxEditorSurface({
           document={initialDocument}
           mode="edit"
           locale="zh-CN"
-          zoomMode={FIT_ZOOM_MODE}
+          zoomMode={{ type: "fixed" }}
           // The packaged zh-CN catalogue covers every UI string. Names that
           // still read as English here (e.g. "Normal", "Calibri") come from the
           // document's own styles and fonts, and must not be rewritten.

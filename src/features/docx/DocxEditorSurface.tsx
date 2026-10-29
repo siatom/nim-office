@@ -15,6 +15,7 @@ import { zhCN } from "@docx-editor.dev/i18n";
 import { ListTree, Loader2 } from "lucide-react";
 
 import FontFamilyPickerContent from "./FontFamilyPicker";
+import { FontSizePicker } from "./FontSizePicker";
 import { FindReplacePanel } from "./FindReplacePanel";
 import ParagraphDialog from "./ParagraphDialog";
 import { createDocxEngine, FIT_ZOOM_MODE } from "./engine";
@@ -290,6 +291,9 @@ export default function DocxEditorSurface({
                 <FontFamilyPickerContent />
               </DocxEditor.Toolbar.FontFamily.Content>
             </DocxEditor.Toolbar.FontFamily>
+            <DocxEditor.Toolbar.Slot slotId="font.size">
+              <FontSizePicker />
+            </DocxEditor.Toolbar.Slot>
             <DocxEditor.Toolbar.Action
               label="文档结构图"
               icon={<ListTree size={18} strokeWidth={1.8} />}

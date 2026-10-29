@@ -28,6 +28,9 @@ pub struct SystemFontFace {
 #[derive(Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SystemFontPayload {
+    /// `std::env::consts::OS`: `windows`, `macos` or `linux`. The frontend uses
+    /// it to advertise the Chinese families that ship with that platform.
+    pub platform: &'static str,
     pub files: Vec<SystemFontFile>,
     pub faces: Vec<SystemFontFace>,
 }
@@ -55,15 +58,37 @@ fn database() -> &'static Database {
 /// installed cut under the name the document authored, and saving keeps that
 /// name intact.
 const FAMILY_GROUPS: &[&[&str]] = &[
-    &["宋体", "simsun", "nsimsun", "songti", "songtisc"],
+    &[
+        "宋体",
+        "simsun",
+        "nsimsun",
+        "songti",
+        "songtisc",
+        "宋体简",
+        "songtijian",
+        "华文宋体",
+        "stsong",
+        "stsongti",
+    ],
     &["微软雅黑", "microsoftyahei", "microsoftyaheiui", "msyh"],
-    &["黑体", "simhei", "stheiti"],
+    &[
+        "黑体",
+        "simhei",
+        "stheiti",
+        "黑体简",
+        "heitijian",
+        "heiti",
+        "heitisc",
+        "华文黑体",
+    ],
     &[
         "楷体",
         "kaiti",
         "kaitisc",
         "楷体gb2312",
         "kaitigb2312",
+        "楷体简",
+        "kaitijian",
         "华文楷体",
         "stkaiti",
     ],
@@ -72,6 +97,8 @@ const FAMILY_GROUPS: &[&[&str]] = &[
         "fangsong",
         "仿宋gb2312",
         "fangsonggb2312",
+        "仿宋简",
+        "fangsongjian",
         "华文仿宋",
         "stfangsong",
     ],
@@ -83,8 +110,15 @@ const FAMILY_GROUPS: &[&[&str]] = &[
         "notoserifsc",
         "notoserifcjksc",
     ],
-    &["苹方", "pingfang", "pingfangsc"],
+    &["苹方", "pingfang", "pingfangsc", "苹方简", "pingfangjian"],
     &["华文中宋", "stzhongsong", "zhongsong"],
+    &["华文细黑", "stxihei", "xihei"],
+    &[
+        "冬青黑体简体中文",
+        "hiraginosansgb",
+        "hiraginosansgbw3",
+        "hiraginosansgbw6",
+    ],
     &[
         "方正小标宋简体",
         "方正小标宋",
@@ -108,6 +142,11 @@ const FAMILY_FALLBACKS: &[(&str, &[&str])] = &[
     // the same serif family rather than switching to the sans fallback.
     ("仿宋", &["宋体"]),
     ("楷体", &["宋体"]),
+    // Apple's optional display cuts: if one is missing, the system Heiti keeps
+    // the same sans voice instead of dropping to the default fallback.
+    ("苹方", &["黑体"]),
+    ("华文细黑", &["黑体"]),
+    ("冬青黑体简体中文", &["黑体"]),
 ];
 
 fn normalize(name: &str) -> String {
@@ -233,7 +272,10 @@ pub fn load_system_fonts(families: Vec<String>) -> SystemFontPayload {
     }
 
     let db = database();
-    let mut payload = SystemFontPayload::default();
+    let mut payload = SystemFontPayload {
+        platform: std::env::consts::OS,
+        ..SystemFontPayload::default()
+    };
     let mut file_ids: HashMap<String, String> = HashMap::new();
     let mut seen_faces: HashSet<String> = HashSet::new();
     let mut total_bytes = 0usize;
@@ -329,6 +371,20 @@ mod tests {
     }
 
     #[test]
+    fn groups_apple_localized_names() {
+        let heiti = candidates("黑体-简");
+        assert!(heiti.contains(&"heitisc".to_string()));
+        assert!(heiti.contains(&"stheiti".to_string()));
+
+        assert!(candidates("Songti SC").contains(&"宋体".to_string()));
+        assert!(candidates("STFangsong").contains(&"仿宋".to_string()));
+
+        // Optional Apple cuts fall back to the system Heiti.
+        assert!(candidates("冬青黑体简体中文").contains(&"黑体".to_string()));
+        assert!(candidates("苹方").contains(&"黑体".to_string()));
+    }
+
+    #[test]
     fn falls_back_for_missing_title_face() {
         let names = candidates("方正小标宋简体");
         let position = |name: &str| {
@@ -357,6 +413,7 @@ mod tests {
             "方正小标宋简体".to_string(),
         ]);
         assert!(!payload.faces.is_empty(), "no installed face matched");
+        assert_eq!(payload.platform, std::env::consts::OS);
         assert!(
             payload.files.iter().any(|file| !file.data.is_empty()),
             "matched faces carried no bytes"

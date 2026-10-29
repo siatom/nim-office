@@ -361,6 +361,26 @@
   border-bottom: 1px solid color-mix(in srgb, var(--border-strong) 78%, transparent);
 }
 
+.docx-editor .oo-horizontal-ruler-track {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex: 0 0 28px;
+  justify-content: center;
+  min-width: 0;
+  background: var(--bg);
+}
+
+.docx-editor .oo-vertical-ruler-rail {
+  position: relative;
+  z-index: 30;
+  flex: 0 0 20px;
+  width: 20px;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
 .docx-editor .docx-ruler-frame {
   transform: translateX(var(--oo-focused-ruler-horizontal-x, 0px));
 }

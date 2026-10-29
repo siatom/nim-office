@@ -49,7 +49,7 @@ function errorMessage(error: unknown): string {
 }
 
 export default function App() {
-  const { mode, isDark, setMode } = useTheme();
+  const { isDark, toggle: toggleMode } = useTheme();
   const { color: accent, select: selectAccent } = useAccent();
 
   const [tabs, setTabs] = useState<DocTab[]>([]);
@@ -428,38 +428,43 @@ export default function App() {
         <div
           id="app-sidebar"
           className={clsx(
-            "relative shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none",
-            sidebarOpen ? "w-[212px]" : "w-0",
+            "relative shrink-0 overflow-hidden border-r border-line bg-surface-muted transition-[width] duration-200 ease-out motion-reduce:transition-none",
+            sidebarOpen ? "w-[212px]" : "w-[52px]",
           )}
-          aria-hidden={!sidebarOpen}
-          inert={!sidebarOpen}
         >
           <Sidebar
-            recent={recent}
+            collapsed={!sidebarOpen}
             hasActive={activeTab !== null}
-            mode={mode}
+            isDark={isDark}
             accent={accent}
             onNew={handleNew}
             onOpen={handleOpen}
             onSave={() => {
               if (activeId) void saveTab(activeId);
             }}
-            onOpenRecent={(entry) => void openPaths([entry.path])}
-            onRemoveRecent={async (entry) => {
-              try {
-                setRecent(await removeRecent(entry.path));
-              } catch (error) {
-                pushToast("error", errorMessage(error));
-              }
-            }}
-            onModeChange={setMode}
+            onToggleMode={toggleMode}
             onAccentChange={selectAccent}
+            onOpenSettings={() => pushToast("info", "设置面板正在开发中，敬请期待")}
           />
         </div>
 
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">
-            {tabs.length === 0 && <EmptyState onOpen={handleOpen} onNew={handleNew} />}
+            {tabs.length === 0 && (
+              <EmptyState
+                recent={recent}
+                onOpen={handleOpen}
+                onNew={handleNew}
+                onOpenRecent={(entry) => void openPaths([entry.path])}
+                onRemoveRecent={async (entry) => {
+                  try {
+                    setRecent(await removeRecent(entry.path));
+                  } catch (error) {
+                    pushToast("error", errorMessage(error));
+                  }
+                }}
+              />
+            )}
 
             {tabs
               .filter((tab) => mounted.includes(tab.id))

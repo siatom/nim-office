@@ -1,5 +1,5 @@
 import type { Editor } from "@docx-editor.dev/react";
-import type { ZoomMode } from "@docx-editor.dev/core";
+import { commandForSlot, type ZoomMode } from "@docx-editor.dev/core";
 
 /**
  * The surface the app depends on, independent of the document engine behind it.
@@ -18,6 +18,8 @@ export interface DocxEngineHandle {
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
+  /** Toggle superscript or subscript on the current selection. */
+  formatScript: (script: "superscript" | "subscript") => void;
 }
 
 /** Zoom ladder shared by the shortcuts and the status-bar readout. */
@@ -78,5 +80,9 @@ export function createDocxEngine(editor: Editor): DocxEngineHandle {
     zoomOut: () => stepZoom(editor, -1),
     // Back to the adaptive scale rather than a pinned 100%: the window decides.
     resetZoom: () => editor.setZoomMode(FIT_ZOOM_MODE),
+    formatScript: (script) => {
+      const command = commandForSlot(script === "superscript" ? "script.super" : "script.sub");
+      if (command) editor.exec(command);
+    },
   };
 }

@@ -154,6 +154,16 @@
   color: var(--text-muted);
 }
 
+.docx-editor .oo-toolbar .oo-text-order-1 { order: 1; }
+.docx-editor .oo-toolbar .oo-text-order-2 { order: 2; }
+.docx-editor .oo-toolbar .oo-text-order-3 { order: 3; }
+.docx-editor .oo-toolbar .oo-text-order-4 { order: 4; }
+.docx-editor .oo-toolbar .oo-text-order-5 { order: 5; }
+.docx-editor .oo-toolbar .oo-text-order-6 { order: 6; }
+.docx-editor .oo-toolbar .oo-text-order-7 { order: 7; }
+.docx-editor .oo-toolbar .oo-text-order-8 { order: 8; }
+.docx-editor .oo-toolbar .oo-text-order-9 { order: 9; }
+
 .docx-editor .oo-toolbar .docx-toolbar__button:hover:not(:disabled) {
   background: var(--surface-muted);
   color: var(--text);

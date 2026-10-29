@@ -11,6 +11,7 @@ import { StatusBar } from "./components/StatusBar";
 import { EmptyState } from "./components/EmptyState";
 import { DropOverlay } from "./components/DropOverlay";
 import { ConfirmDialog, type ConfirmAction } from "./components/ConfirmDialog";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { ToastStack, type ToastItem, type ToastKind } from "./components/Toast";
 import { DocxLoadingState, DocxView } from "./features/docx/DocxView";
 import type { DocxEngineHandle } from "./features/docx/engine";
@@ -40,11 +41,18 @@ interface DocTab {
   opening: boolean;
   openError: string | null;
   dirty: boolean;
+  revision: number;
   saving: boolean;
 }
 
 const SUPPORTED: DocumentKind[] = ["docx"];
 const SIDEBAR_KEY = "one-office.sidebar";
+const AUTO_SAVE_KEY = "one-office.auto-save";
+const AUTO_SAVE_DELAY = 1500;
+
+function readAutoSavePreference(): boolean {
+  return localStorage.getItem(AUTO_SAVE_KEY) === "enabled";
+}
 
 function errorMessage(error: unknown): string {
   if (typeof error === "string") return error;
@@ -66,6 +74,8 @@ export default function App() {
     { kind: "tab"; id: string } | { kind: "window" } | null
   >(null);
   const [dragging, setDragging] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [autoSave, setAutoSave] = useState(readAutoSavePreference);
   // The welcome page is also reachable while documents stay open, so it needs
   // its own flag rather than being derived from an empty tab list.
   const [welcomeOpen, setWelcomeOpen] = useState(false);
@@ -74,6 +84,8 @@ export default function App() {
   );
 
   const handles = useRef(new Map<string, DocxEngineHandle>());
+  const saveOperations = useRef(new Map<string, Promise<boolean>>());
+  const revisions = useRef(new Map<string, number>());
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const activeIdRef = useRef(activeId);
@@ -105,6 +117,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(SIDEBAR_KEY, sidebarOpen ? "open" : "collapsed");
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    localStorage.setItem(AUTO_SAVE_KEY, autoSave ? "enabled" : "disabled");
+  }, [autoSave]);
 
   const patchTab = useCallback((id: string, patch: Partial<DocTab>) => {
     setTabs((prev) => prev.map((tab) => (tab.id === id ? { ...tab, ...patch } : tab)));
@@ -156,6 +172,7 @@ export default function App() {
             opening: true,
             openError: null,
             dirty: false,
+            revision: 0,
             saving: false,
           };
           setTabs((prev) => [...prev, tab]);
@@ -215,6 +232,7 @@ export default function App() {
         opening: false,
         openError: null,
         dirty: false,
+        revision: 0,
         saving: false,
       },
     ]);
@@ -223,48 +241,94 @@ export default function App() {
   }, []);
 
   const saveTab = useCallback(
-    async (id: string, forceDialog = false): Promise<boolean> => {
-      const tab = tabsRef.current.find((item) => item.id === id);
-      const handle = handles.current.get(id);
-      if (!tab || !handle) return false;
-
-      patchTab(id, { saving: true });
-      try {
-        const bytes = await handle.exportDocx();
-        let path = tab.path;
-
-        if (!path || forceDialog) {
-          const chosen = await saveDialog({
-            title: "保存文档",
-            defaultPath: tab.path ?? tab.name,
-            filters: [{ name: "Word 文档", extensions: ["docx"] }],
-          });
-          if (!chosen) return false;
-          path = chosen;
-        }
-
-        await writeDocument(path, bytes);
-        patchTab(id, {
-          path,
-          name: baseName(path),
-          data: bytes,
-          size: bytes.length,
-          dirty: false,
+    (id: string, forceDialog = false): Promise<boolean> => {
+      const inProgress = saveOperations.current.get(id);
+      if (inProgress) {
+        return inProgress.then((saved) => {
+          if (!saved) return false;
+          if (forceDialog) return saveTab(id, true);
+          const current = tabsRef.current.find((item) => item.id === id);
+          return current?.dirty ? saveTab(id) : true;
         });
-        setRecent(await pushRecent(path));
-        return true;
-      } catch (error) {
-        pushToast("error", errorMessage(error));
-        return false;
-      } finally {
-        patchTab(id, { saving: false });
       }
+
+      const operation = (async (): Promise<boolean> => {
+        const tab = tabsRef.current.find((item) => item.id === id);
+        const handle = handles.current.get(id);
+        if (!tab || !handle) return false;
+        const savedRevision = revisions.current.get(id) ?? tab.revision;
+
+        patchTab(id, { saving: true });
+        try {
+          const bytes = await handle.exportDocx();
+          let path = tab.path;
+
+          if (!path || forceDialog) {
+            const chosen = await saveDialog({
+              title: "保存文档",
+              defaultPath: tab.path ?? tab.name,
+              filters: [{ name: "Word 文档", extensions: ["docx"] }],
+            });
+            if (!chosen) return false;
+            path = chosen;
+          }
+
+          await writeDocument(path, bytes);
+          const hasNewerChanges = (revisions.current.get(id) ?? savedRevision) !== savedRevision;
+          patchTab(id, {
+            path,
+            name: baseName(path),
+            data: bytes,
+            size: bytes.length,
+            dirty: hasNewerChanges,
+          });
+          setRecent(await pushRecent(path));
+          return true;
+        } catch (error) {
+          pushToast("error", errorMessage(error));
+          return false;
+        } finally {
+          patchTab(id, { saving: false });
+        }
+      })();
+
+      saveOperations.current.set(id, operation);
+      const releaseLock = () => {
+        if (saveOperations.current.get(id) === operation) {
+          saveOperations.current.delete(id);
+        }
+      };
+      void operation.then(releaseLock, releaseLock);
+      return operation;
     },
     [patchTab, pushToast],
   );
 
+  useEffect(() => {
+    if (!autoSave) return;
+    const timers = tabs
+      .filter((tab) => tab.dirty && tab.path && !tab.opening && !tab.openError)
+      .map((tab) =>
+        window.setTimeout(() => {
+          void saveTab(tab.id);
+        }, AUTO_SAVE_DELAY),
+      );
+    return () => timers.forEach(window.clearTimeout);
+  }, [autoSave, saveTab, tabs]);
+
+  const markTabDirty = useCallback((id: string) => {
+    revisions.current.set(id, (revisions.current.get(id) ?? 0) + 1);
+    setTabs((prev) =>
+      prev.map((tab) =>
+        tab.id === id ? { ...tab, dirty: true, revision: tab.revision + 1 } : tab,
+      ),
+    );
+  }, []);
+
   const closeTab = useCallback((id: string) => {
     handles.current.delete(id);
+    revisions.current.delete(id);
+    saveOperations.current.delete(id);
     setMounted((prev) => prev.filter((item) => item !== id));
     setTabs((prev) => {
       const index = prev.findIndex((tab) => tab.id === id);
@@ -346,6 +410,13 @@ export default function App() {
           if (id) requestClose(id);
           break;
         case "Equal":
+          event.preventDefault();
+          if (id) {
+            handles.current
+              .get(id)
+              ?.formatScript(event.shiftKey ? "superscript" : "subscript");
+          }
+          break;
         case "NumpadAdd":
           event.preventDefault();
           zoomBy(1);
@@ -512,7 +583,7 @@ export default function App() {
             }}
             onToggleMode={toggleMode}
             onAccentChange={selectAccent}
-            onOpenSettings={() => pushToast("info", "设置面板正在开发中，敬请期待")}
+            onOpenSettings={() => setSettingsOpen(true)}
           />
         </div>
 
@@ -551,7 +622,7 @@ export default function App() {
                       onReady={(handle) => {
                         handles.current.set(tab.id, handle);
                       }}
-                      onDirty={() => patchTab(tab.id, { dirty: true })}
+                      onDirty={() => markTabDirty(tab.id)}
                       onError={(message) => pushToast("error", message)}
                       // Background tabs keep their editors mounted; only the
                       // document on screen may own the status-bar readout.
@@ -594,6 +665,13 @@ export default function App() {
         }
         actions={confirmActions}
         onCancel={() => setPending(null)}
+      />
+
+      <SettingsDialog
+        open={settingsOpen}
+        autoSave={autoSave}
+        onAutoSaveChange={setAutoSave}
+        onClose={() => setSettingsOpen(false)}
       />
 
       {dragging && <DropOverlay />}

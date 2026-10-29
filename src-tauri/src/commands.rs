@@ -2,13 +2,18 @@ use std::path::PathBuf;
 
 use tauri::AppHandle;
 
-use crate::document::{self, DocumentPayload};
+use crate::document::{self, DocumentPayload, DocumentSummary};
 use crate::error::AppResult;
 use crate::recent::{self, RecentEntry};
 
 #[tauri::command]
 pub fn read_document(path: String) -> AppResult<DocumentPayload> {
     document::read_document(&PathBuf::from(path))
+}
+
+#[tauri::command]
+pub fn describe_document(path: String) -> AppResult<DocumentSummary> {
+    document::describe_document(&PathBuf::from(path))
 }
 
 #[tauri::command]

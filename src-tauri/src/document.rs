@@ -36,13 +36,22 @@ impl DocumentKind {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DocumentPayload {
+pub struct DocumentSummary {
     pub path: String,
     pub name: String,
     pub kind: DocumentKind,
     pub size: u64,
     /// Milliseconds since the Unix epoch, if the platform reports a mtime.
     pub modified: Option<u64>,
+}
+
+/// The document metadata plus its contents. Kept separate from `DocumentSummary`
+/// because inspecting a path must stay cheap enough to paint an opening tab first.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentPayload {
+    #[serde(flatten)]
+    pub summary: DocumentSummary,
     /// Raw file contents, base64 encoded for transport over IPC.
     pub data: String,
 }
@@ -63,7 +72,7 @@ pub fn modified_millis(path: &Path) -> Option<u64> {
         .map(|d| d.as_millis() as u64)
 }
 
-pub fn read_document(path: &Path) -> AppResult<DocumentPayload> {
+pub fn describe_document(path: &Path) -> AppResult<DocumentSummary> {
     if !path.exists() {
         return Err(AppError::Invalid(format!("文件不存在：{}", path.display())));
     }
@@ -71,13 +80,21 @@ pub fn read_document(path: &Path) -> AppResult<DocumentPayload> {
         return Err(AppError::Invalid(format!("不是文件：{}", path.display())));
     }
 
-    let bytes = std::fs::read(path)?;
-    Ok(DocumentPayload {
+    let metadata = std::fs::metadata(path)?;
+    Ok(DocumentSummary {
         path: path.to_string_lossy().into_owned(),
         name: file_name(path),
         kind: DocumentKind::from_path(path),
-        size: bytes.len() as u64,
+        size: metadata.len(),
         modified: modified_millis(path),
+    })
+}
+
+pub fn read_document(path: &Path) -> AppResult<DocumentPayload> {
+    let summary = describe_document(path)?;
+    let bytes = std::fs::read(path)?;
+    Ok(DocumentPayload {
+        summary,
         data: STANDARD.encode(bytes),
     })
 }

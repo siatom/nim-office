@@ -1,5 +1,6 @@
 import type { Editor } from "@docx-editor.dev/react";
 import { commandForSlot, type ZoomMode } from "@docx-editor.dev/core";
+import { ZOOM_STEPS } from "./zoom";
 
 /**
  * The surface the app depends on, independent of the document engine behind it.
@@ -40,8 +41,6 @@ interface ZoomModeController {
 }
 
 /** Zoom ladder shared by the shortcuts and the status-bar readout. */
-export const ZOOM_STEPS = [50, 67, 75, 90, 100, 110, 125, 150, 175, 200];
-
 /**
  * The resting scale: the page fills the width left beside the navigation pane and
  * follows the window from there. The packaged default stops shrinking at 50%,

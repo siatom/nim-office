@@ -32,5 +32,20 @@ export default defineConfig(() => ({
   build: {
     target: "esnext",
     chunkSizeWarningLimit: 2000,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "docx-editor",
+              test: /node_modules[\\/]@docx-editor\.dev[\\/]/,
+              priority: 20,
+              includeDependenciesRecursively: false,
+              maxSize: 1_500_000,
+            },
+          ],
+        },
+      },
+    },
   },
 }));

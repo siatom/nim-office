@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import type { DocumentKind } from "../lib/ipc";
 import { KIND_LABEL, formatBytes } from "../lib/format";
-import { ZOOM_STEPS, type ZoomDisplayMode } from "../features/docx/engine";
+import type { ZoomDisplayMode } from "../features/docx/engine";
+import { ZOOM_STEPS } from "../features/docx/zoom";
 
 const ZOOM_MENU_WIDTH = 148;
 const ZOOM_MENU_GAP = 10;

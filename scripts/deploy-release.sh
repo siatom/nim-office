@@ -50,8 +50,8 @@ mkdir -p "$snapshot_dir"
 snapshot_installer="$snapshot_dir/$(basename -- "$installer")"
 cp -- "$installer" "$snapshot_installer"
 
-echo "==> Deploy: silent install $snapshot_installer //S"
+echo "==> Deploy: silent install $snapshot_installer /S"
 # Git Bash/MSYS can rewrite slash-prefixed arguments unless path conversion is disabled.
-MSYS_NO_PATHCONV=1 "$snapshot_installer" //S
+MSYS_NO_PATHCONV=1 "$snapshot_installer" /S
 
 echo "Deployment complete. Installer snapshot: $snapshot_installer"

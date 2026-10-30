@@ -12,6 +12,7 @@ build/
 # rust / tauri
 src-tauri/target/
 src-tauri/gen/schemas/
+.local-cicd/
 
 # logs
 logs/

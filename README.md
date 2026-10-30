@@ -105,6 +105,14 @@ Release build:
 pnpm tauri build
 ```
 
+Build and silently install the Windows NSIS release locally (Git Bash):
+
+```bash
+bash ./scripts/deploy-release.sh
+```
+
+The installer snapshot is kept under `.local-cicd/releases/`. Pass `--debug` to build and install a debug bundle.
+
 ### Single instance
 
 NimOffice runs as a single instance: launching it again brings the existing window to the front

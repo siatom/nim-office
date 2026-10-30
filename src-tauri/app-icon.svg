@@ -1,10 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
-  <rect width="1024" height="1024" rx="224" fill="#2F67E8" />
+  <defs>
+    <linearGradient id="ribbon" x1="300" y1="300" x2="710" y2="710" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8BE8E0" />
+      <stop offset="0.48" stop-color="#5AABF2" />
+      <stop offset="1" stop-color="#6877F5" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="#101A2A" />
+
+  <g transform="translate(-54 5)">
+  <g transform="translate(0 492) scale(1 1.1) translate(0 -492)">
+  <!-- A folded, continuous ribbon draws the N and suggests a page turning. -->
   <path
-    d="M360 704V320L664 704V320"
-    stroke="#FFFFFF"
-    stroke-width="104"
+    d="M278 704V358c0-36 29-65 65-65h40c19 0 37 8 51 21l247 235V358c0-36 29-65 65-65h8c36 0 65 29 65 65v346c0 36-29 65-65 65h-40c-19 0-37-8-51-21L416 513v191c0 36-29 65-65 65h-8c-36 0-65-29-65-65Z"
+    fill="url(#ribbon)"
+  />
+
+  <!-- Soft reflected light follows the page-like ribbon edge. -->
+  <path
+    d="M313 680V358c0-17 13-30 30-30h39c11 0 21 4 29 11l232 220"
+    stroke="#E6FFFC"
+    stroke-opacity="0.34"
+    stroke-width="9"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
+  </g>
+
+  <!-- One small glint marks intelligent assistance. -->
+  <path d="M797 217c9 34 22 47 56 56-34 9-47 22-56 56-9-34-22-47-56-56 34-9 47-22 56-56Z" fill="#8BE8E0" />
+  </g>
 </svg>

@@ -2,8 +2,11 @@
 
 A cross-platform, lightweight office suite built with Tauri 2.
 
-The goal is a small, fast desktop app that opens and edits `docx` / `xlsx` / `pptx` / `pdf`
-with a deliberately narrow, high-frequency feature set — not a Microsoft Office replacement.
+NimOffice is guided by two principles: **lightweight** and **intelligent**. It keeps the desktop
+shell small and fast, loads document editing capabilities on demand, and focuses on everyday office
+tasks rather than recreating a full office suite. Intelligent assistance is an evolving direction:
+the document agent is an initial step, with room to grow into richer AI-assisted office workflows
+over time. The goal is to make useful assistance part of a focused, responsive desktop app.
 
 ## Status
 
@@ -18,25 +21,30 @@ with a deliberately narrow, high-frequency feature set — not a Microsoft Offic
 
 ## Interface
 
-A frameless window with a custom title bar and a left sidebar instead of a native menu bar:
+A frameless workspace with a custom title bar, collapsible action sidebar, tab strip, and document
+canvas:
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│ logo  NimOffice  <file>               ─  □  ×        │  custom title bar (drag region)
+│ logo  NimOffice  · tab · tab · tab · +    ─  □  ×    │  custom title bar and tabs
 ├────────────┬─────────────────────────────────────────┤
-│ New        │  tab · tab · tab                     +  │
+│ New        │  formatting toolbar                     │
 │ Open       ├─────────────────────────────────────────┤
-│ Save       │  formatting toolbar                     │
-│            ├─────────────────────────────────────────┤
-│ Recent     │                                         │
-│  · file    │            document page                │
-│  · file    │                                         │
+│ Save       │                                         │
+│ Agent      │             document page               │
 │            │                                         │
-│ Appearance │                                         │
+│            │                                         │
+│            │                                         │
+│            │                                         │
 ├────────────┴─────────────────────────────────────────┤
-│ status: saved · size · zoom                          │
+│ status: document · save state · layout · zoom         │
 └──────────────────────────────────────────────────────┘
 ```
+
+The sidebar can collapse to an icon rail and keeps New, Open, Save, and Agent actions close at hand.
+Appearance controls for light / dark mode, accent colour, and settings sit at its bottom. The welcome
+screen lists recent files when no document is active. The status bar shows the active document's
+save state and size, with page layout, zoom, and fullscreen controls.
 
 Shortcuts: `Ctrl+N` new, `Ctrl+O` open, `Ctrl+S` save, `Ctrl+Shift+S` save as,
 `Ctrl+W` close tab, `Ctrl+=` / `Ctrl+-` / `Ctrl+0` zoom.
@@ -45,49 +53,17 @@ The **文档结构图** action at the end of the toolbar opens the document navi
 left gutter: a live headings outline (click a row to jump to it), Find (`Ctrl+F`), and Go to
 bookmark (`Ctrl+G`). It opens on demand so documents start centred in the full editor viewport.
 
-The appearance panel at the bottom of the sidebar offers light / dark / system mode, eight accent
-presets, and a custom colour picker. The accent is persisted locally and repaints buttons,
-selection highlights, the app mark, and the document editor's toolbar chrome.
+The **文档智能体** opens beside the editor and is the first step toward broader AI-assisted office
+features. It currently answers questions about the active Word document using a configurable model;
+it is read-only, and long documents use their outline and sampled text as context. The appearance
+controls offer light / dark mode, eight accent presets, and a custom colour picker. The accent is
+persisted locally and repaints buttons, selection highlights, the app mark, and the document editor's
+toolbar chrome.
 
 On macOS the native traffic lights are kept and only the title is hidden, so the app still
 feels native there.
 
-## Stack
-
-| Layer | Choice | Why |
-| --- | --- | --- |
-| Shell | Tauri 2 (Rust) | ~10 MB binaries vs ~150 MB for Electron, native file associations |
-| UI | React 19 + TypeScript + Vite + Tailwind CSS 4 | |
-| DOCX | [docx-editor](https://github.com/eigenpal/docx-editor) 2.x (Apache-2.0 core) | Canonical OOXML editing: unknown markup is preserved on save, so round-trips stay lossless without an HTML intermediate |
-| XLSX (planned) | [Univer](https://github.com/dream-num/univer) + custom xlsx bridge | Univer's open-source core covers interaction and formulas; xlsx import/export lives in the commercial tier, so a bridge over ExcelJS is required |
-| PDF (planned) | pdf.js + pdf-lib, PDFium in Rust | Matches [OpenPDFStudio](https://github.com/genspark-ai/genoffice)'s approach for text-level edits |
-| PPTX (planned) | Custom canvas editor over OOXML | No usable open-source pptx editor exists; `slideN.xml` is edited directly |
-
-### Why not the alternatives
-
-- **Electron** — [GenOffice](https://github.com/genspark-ai/genoffice) is a complete Apache-2.0 office suite worth reading for architecture, but Electron's footprint contradicts the lightweight goal.
-- **Luckysheet** — archived; Univer is its official successor.
-- **docx-preview / mammoth** — read-only rendering; edits cannot be written back without losing formatting.
-- **SuperDoc** — strong DOCX fidelity, but its engine (`@superdoc/docx-engine`) is closed source and the wrapper is AGPL-3.0.
-- **LibreOffice / ONLYOFFICE** — full-fidelity but hundreds of MB, and they require an external process.
-
-## Architecture
-
-```
-src-tauri/                 Rust backend
-  src/document.rs          Read/write with atomic temp-file replace
-  src/recent.rs            Recent-file store (JSON in the app config dir)
-  src/commands.rs          IPC surface
-src/
-  App.tsx                  Tab workspace, open/save/close orchestration, shortcuts
-  components/              Title bar, sidebar, tab bar, status bar, dialogs, toasts
-  features/docx/           lazy docx-editor mount, engine adapter, navigation pane, system fonts
-  lib/accents.ts           Accent presets and contrast-safe ink for custom colours
-  lib/ipc.ts               Typed wrappers around invoke()
-```
-
-Documents travel over IPC as base64. File writes go to a sibling `.tmp` file and are then
-renamed, so an interrupted save cannot truncate the original.
+Implementation details and technical choices are documented in [Technical Decisions](docs/technical-decisions.md).
 
 ## Development
 
@@ -113,33 +89,7 @@ bash ./scripts/deploy-release.sh
 
 The installer snapshot is kept under `.local-cicd/releases/`. Pass `--debug` to build and install a debug bundle.
 
-### Single instance
-
-NimOffice runs as a single instance: launching it again brings the existing window to the front
-and opens any documents passed on the command line. Dev builds (`pnpm tauri dev`) use a
-`.dev`-suffixed bundle identifier, which gives them their own lock and app-data directory, so a
-dev session and an installed build can run side by side. `pnpm tauri build --debug` counts as a
-build, not as a dev session.
-
 Requires Node 20+, Rust 1.77+, and the platform Tauri prerequisites.
-
-## Bundle size
-
-The editor is loaded on demand. The shell paints from a ~250 KB chunk (~78 KB gzipped);
-the editor chunk (~4.6 MB, ~1.39 MB gzipped) and the 420 KB HarfBuzz WASM (~176 KB gzipped)
-arrive when the first document tab mounts. CJK font files are read from the operating system
-on demand (SimSun's TTC is ~17 MB), so Word-compatible measurement costs no bundle size; the
-per-face shaping ceiling is raised to 64 MB to admit those collections.
-
-## Fonts
-
-Font bytes always come from the host, so the app ships no font files. Documents that name
-`仿宋_GB2312`, `楷体_GB2312` or `方正小标宋简体` keep those names when saved; if the exact file
-is not installed, the resolver serves the closest installed face (FangSong / KaiTi, and
-华文中宋 for the title face) under the authored name, and HarfBuzz measures with those bytes.
-The picker offers 宋体, 黑体, 楷体, 仿宋 and the government-document faces everywhere, adds
-微软雅黑 / 等线 on Windows and 苹方 plus the 华文 faces on macOS, all under a dedicated
-中文字体 group. Apple-only families are never listed on Windows.
 
 ## License
 
